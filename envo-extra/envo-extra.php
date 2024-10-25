@@ -3,7 +3,7 @@
  * Plugin Name: Envo Extra
  * Plugin URI: https://envothemes.com/
  * Description: Extra addon for EnvoThemes Themes
- * Version: 1.9.1
+ * Version: 1.9.2
  * Author: EnvoThemes
  * Author URI: https://envothemes.com/
  * License: GPL-2.0+
@@ -11,7 +11,7 @@
  * Domain Path: /languages
  * WC requires at least: 3.3.0
  * WC tested up to: 9.4.0
- * Elementor tested up to: 3.24.0
+ * Elementor tested up to: 3.25.0
  */
 // Exit if accessed directly.
 if ( !defined( 'ABSPATH' ) ) {

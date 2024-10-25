@@ -128,6 +128,8 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 		public static function get_demos_data() {
 			$theme		 = wp_get_theme();
 			$enwoo_data	 = array();
+			$data_royal	 = array();
+			$data_one	 = array();
 			$data		 = array();
 			// Demos url
 			$img_url	 = ENVO_URL . 'img/demos/' . $theme->template . '/';
@@ -1173,27 +1175,365 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 			}
 			
 			$img_url = ENVO_URL . 'img/demos/envo-royal/';
-				$url		= 'http://envo-demos.com/wp-content/uploads/demo-import/envo-royal/envo-royal/';
-				$url_woo	= 'http://envo-demos.com/wp-content/uploads/demo-import/envo-royal/envo-royal-woocommerce/';
-				$data_royal	 = array(
-					'home-free-1' => array(
-						'demo_name'						 => 'Envo Royal Home #1',
+			$url		= 'http://envo-demos.com/wp-content/uploads/demo-import/envo-royal/envo-royal/';
+			$url_woo	= 'http://envo-demos.com/wp-content/uploads/demo-import/envo-royal/envo-royal-woocommerce/';
+			$data_royal	 = array(
+				'home-free-1' => array(
+					'demo_name'						 => 'Envo Royal Home #1',
+					'categories'					 => array( 'WooCommerce', 'Elementor', 'Free' ),
+					'xml_file'						 => $url . 'content.xml',
+					'theme_settings'				 => $url . 'customizer.dat',
+					'widgets_file'					 => $url . 'widgets.wie',
+					'screenshot'					 => $img_url . 'screenshot-1-new.webp',
+					'home_title'					 => 'Home Free #1',
+					'demo_link'						 => 'http://envo-demos.com/envo-royal/',
+					'blog_title'					 => 'Blog',
+					'posts_to_show'					 => '6',
+					'elementor_width'				 => '1140',
+					'is_shop'						 => true,
+					'elementor_experiment-container' => 'active',
+					'woo_image_size'				 => '600',
+					'woo_thumb_size'				 => '300',
+					'woo_crop_width'				 => '2',
+					'woo_crop_height'				 => '3',
+					'required_plugins'				 => array(
+						'free'			 => array(
+							array(
+								'slug'	 => 'elementor',
+								'init'	 => 'elementor/elementor.php',
+								'name'	 => 'Elementor',
+							),
+						),
+						'recommended'	 => array(
+							array(
+								'slug'	 => 'woocommerce',
+								'init'	 => 'woocommerce/woocommerce.php',
+								'name'	 => 'WooCommerce',
+								'notice' => 'For Shop purposes only',
+							),
+						),
+						'premium'		 => array(),
+					),
+					'required_theme'		=> 'Envo Royal',
+					'required_theme_url'	=> 'https://envothemes.com/envo-royal-free-wp-theme/',
+				),
+				'home-free-2'	 => array(
+					'demo_name'						 => 'Envo Royal Home #2',
+					'categories'					 => array( 'WooCommerce', 'Elementor', 'Free' ),
+					'xml_file'						 => $url . 'content.xml',
+					'theme_settings'				 => $url . 'customizer.dat',
+					'widgets_file'					 => $url . 'widgets.wie',
+					'screenshot'					 => $img_url . 'screenshot-2.webp',
+					'home_title'					 => 'Home Free #2',
+					'demo_link'						 => 'http://envo-demos.com/envo-royal/home-free-2/',
+					'blog_title'					 => 'Blog',
+					'posts_to_show'					 => '6',
+					'elementor_width'				 => '1140',
+					'is_shop'						 => true,
+					'elementor_experiment-container' => 'active',
+					'woo_image_size'				 => '600',
+					'woo_thumb_size'				 => '300',
+					'woo_crop_width'				 => '2',
+					'woo_crop_height'				 => '3',
+					'required_plugins'				 => array(
+						'free'			 => array(
+							array(
+								'slug'	 => 'elementor',
+								'init'	 => 'elementor/elementor.php',
+								'name'	 => 'Elementor',
+							),
+							array(
+								'slug'	 => 'envo-elementor-for-woocommerce',
+								'init'	 => 'envo-elementor-for-woocommerce/elementor-templates-widgets-woocommerce.php',
+								'name'	 => 'Elementor Templates and Widgets',
+								'notice' => '',
+							),
+						),
+						'recommended'	 => array(
+							array(
+								'slug'	 => 'woocommerce',
+								'init'	 => 'woocommerce/woocommerce.php',
+								'name'	 => 'WooCommerce',
+								'notice' => 'For Shop purposes only',
+							),
+						),
+						'premium'		 => array(),
+					),
+					'required_theme'		=> 'Envo Royal',
+					'required_theme_url'	=> 'https://envothemes.com/envo-royal-free-wp-theme/',
+				),
+				'home-free-3'	 => array(
+					'demo_name'						 => 'Envo Royal Home #3',
+					'categories'					 => array( 'WooCommerce', 'Elementor', 'Free' ),
+					'xml_file'						 => $url . 'content.xml',
+					'theme_settings'				 => $url . 'customizer.dat',
+					'widgets_file'					 => $url . 'widgets.wie',
+					'screenshot'					 => $img_url . 'screenshot-3.webp',
+					'home_title'					 => 'Home Free #3',
+					'demo_link'						 => 'http://envo-demos.com/envo-royal/home-free-3/',
+					'blog_title'					 => 'Blog',
+					'posts_to_show'					 => '6',
+					'elementor_width'				 => '1140',
+					'is_shop'						 => true,
+					'elementor_experiment-container' => 'active',
+					'woo_image_size'				 => '600',
+					'woo_thumb_size'				 => '300',
+					'woo_crop_width'				 => '2',
+					'woo_crop_height'				 => '3',
+					'required_plugins'				 => array(
+						'free'			 => array(
+							array(
+								'slug'	 => 'elementor',
+								'init'	 => 'elementor/elementor.php',
+								'name'	 => 'Elementor',
+							),
+							array(
+								'slug'	 => 'envo-elementor-for-woocommerce',
+								'init'	 => 'envo-elementor-for-woocommerce/elementor-templates-widgets-woocommerce.php',
+								'name'	 => 'Elementor Templates and Widgets',
+								'notice' => '',
+							),
+						),
+						'recommended'	 => array(
+							array(
+								'slug'	 => 'woocommerce',
+								'init'	 => 'woocommerce/woocommerce.php',
+								'name'	 => 'WooCommerce',
+								'notice' => 'For Shop purposes only',
+							),
+						),
+						'premium'		 => array(),
+					),
+					'required_theme'		=> 'Envo Royal',
+					'required_theme_url'	=> 'https://envothemes.com/envo-royal-free-wp-theme/',
+				),
+				'home-free-4'	 => array(
+					'demo_name'						 => 'Envo Royal Home #4',
+					'categories'					 => array( 'WooCommerce', 'Elementor', 'Free' ),
+					'xml_file'						 => $url . 'content.xml',
+					'theme_settings'				 => $url . 'customizer.dat',
+					'widgets_file'					 => $url . 'widgets.wie',
+					'screenshot'					 => $img_url . 'screenshot-4.webp',
+					'home_title'					 => 'Home Free #4',
+					'demo_link'						 => 'http://envo-demos.com/envo-royal/home-free-4/',
+					'blog_title'					 => 'Blog',
+					'posts_to_show'					 => '6',
+					'elementor_width'				 => '1140',
+					'is_shop'						 => true,
+					'elementor_experiment-container' => 'active',
+					'woo_image_size'				 => '600',
+					'woo_thumb_size'				 => '300',
+					'woo_crop_width'				 => '2',
+					'woo_crop_height'				 => '3',
+					'required_plugins'				 => array(
+						'free'			 => array(
+							array(
+								'slug'	 => 'elementor',
+								'init'	 => 'elementor/elementor.php',
+								'name'	 => 'Elementor',
+							),
+							array(
+								'slug'	 => 'envo-elementor-for-woocommerce',
+								'init'	 => 'envo-elementor-for-woocommerce/elementor-templates-widgets-woocommerce.php',
+								'name'	 => 'Elementor Templates and Widgets',
+								'notice' => '',
+							),
+						),
+						'recommended'	 => array(
+							array(
+								'slug'	 => 'woocommerce',
+								'init'	 => 'woocommerce/woocommerce.php',
+								'name'	 => 'WooCommerce',
+								'notice' => 'For Shop purposes only',
+							),
+						),
+						'premium'		 => array(),
+					),
+					'required_theme'		=> 'Envo Royal',
+					'required_theme_url'	=> 'https://envothemes.com/envo-royal-free-wp-theme/',
+				),
+				'home-free-woo-1'	 => array(
+					'demo_name'						 => 'Envo Royal Woo Home #1',
+					'categories'					 => array( 'WooCommerce', 'Elementor', 'Free' ),
+					'xml_file'						 => $url_woo . 'content.xml',
+					'theme_settings'				 => $url_woo . 'customizer.dat',
+					'widgets_file'					 => $url_woo . 'widgets.wie',
+					'screenshot'					 => $img_url . 'screenshot-woo-1.webp',
+					'home_title'					 => 'Home Free WooCommerce #1',
+					'demo_link'						 => 'http://envo-demos.com/envo-royal-woocommerce/home-free-woocommerce-1/',
+					'blog_title'					 => 'Blog',
+					'posts_to_show'					 => '6',
+					'elementor_width'				 => '1140',
+					'is_shop'						 => true,
+					'elementor_experiment-container' => 'active',
+					'woo_image_size'				 => '600',
+					'woo_thumb_size'				 => '300',
+					'woo_crop_width'				 => '2',
+					'woo_crop_height'				 => '3',
+					'required_plugins'				 => array(
+						'free'			 => array(
+							array(
+								'slug'	 => 'elementor',
+								'init'	 => 'elementor/elementor.php',
+								'name'	 => 'Elementor',
+							),
+							array(
+								'slug'	 => 'envo-elementor-for-woocommerce',
+								'init'	 => 'envo-elementor-for-woocommerce/elementor-templates-widgets-woocommerce.php',
+								'name'	 => 'Elementor Templates and Widgets',
+							),
+							array(
+								'slug'	 => 'woocommerce',
+								'init'	 => 'woocommerce/woocommerce.php',
+								'name'	 => 'WooCommerce',
+							),
+						),
+						'recommended'	 => array(
+							array(
+								'slug'	 => 'yith-woocommerce-wishlist',
+								'init'	 => 'yith-woocommerce-wishlist/init.php',
+								'name'	 => 'YITH WooCommerce Wishlist',
+							),
+							array(
+								'slug'	 => 'yith-woocommerce-compare',
+								'init'	 => 'yith-woocommerce-compare/init.php',
+								'name'	 => 'YITH WooCommerce Compare',
+							),
+						),
+						'premium'		 => array(),
+					),
+					'required_theme'		=> 'Envo Royal',
+					'required_theme_url'	=> 'https://envothemes.com/envo-royal-free-wp-theme/',
+				),
+				'home-free-woo-2'	 => array(
+					'demo_name'						 => 'Envo Royal Woo Home #2',
+					'categories'					 => array( 'WooCommerce', 'Elementor', 'Free' ),
+					'xml_file'						 => $url_woo . 'content.xml',
+					'theme_settings'				 => $url_woo . 'customizer.dat',
+					'widgets_file'					 => $url_woo . 'widgets.wie',
+					'screenshot'					 => $img_url . 'screenshot-woo-2.webp',
+					'home_title'					 => 'Home Free WooCommerce #2',
+					'demo_link'						 => 'http://envo-demos.com/envo-royal-woocommerce/home-free-woocommerce-2/',
+					'blog_title'					 => 'Blog',
+					'posts_to_show'					 => '6',
+					'elementor_width'				 => '1140',
+					'is_shop'						 => true,
+					'elementor_experiment-container' => 'active',
+					'woo_image_size'				 => '600',
+					'woo_thumb_size'				 => '300',
+					'woo_crop_width'				 => '2',
+					'woo_crop_height'				 => '3',
+					'required_plugins'				 => array(
+						'free'			 => array(
+							array(
+								'slug'	 => 'elementor',
+								'init'	 => 'elementor/elementor.php',
+								'name'	 => 'Elementor',
+							),
+							array(
+								'slug'	 => 'envo-elementor-for-woocommerce',
+								'init'	 => 'envo-elementor-for-woocommerce/elementor-templates-widgets-woocommerce.php',
+								'name'	 => 'Elementor Templates and Widgets',
+							),
+							array(
+								'slug'	 => 'woocommerce',
+								'init'	 => 'woocommerce/woocommerce.php',
+								'name'	 => 'WooCommerce',
+							),
+						),
+						'recommended'	 => array(
+							array(
+								'slug'	 => 'yith-woocommerce-wishlist',
+								'init'	 => 'yith-woocommerce-wishlist/init.php',
+								'name'	 => 'YITH WooCommerce Wishlist',
+							),
+							array(
+								'slug'	 => 'yith-woocommerce-compare',
+								'init'	 => 'yith-woocommerce-compare/init.php',
+								'name'	 => 'YITH WooCommerce Compare',
+							),
+						),
+						'premium'		 => array(),
+					),
+					'required_theme'		=> 'Envo Royal',
+					'required_theme_url'	=> 'https://envothemes.com/envo-royal-free-wp-theme/',
+				),
+				'home-free-woo-3'	 => array(
+					'demo_name'						 => 'Envo Royal Woo Home #3',
+					'categories'					 => array( 'WooCommerce', 'Elementor', 'Free' ),
+					'xml_file'						 => $url_woo . 'content.xml',
+					'theme_settings'				 => $url_woo . 'customizer.dat',
+					'widgets_file'					 => $url_woo . 'widgets.wie',
+					'screenshot'					 => $img_url . 'screenshot-woo-3.webp',
+					'home_title'					 => 'Home Free WooCommerce #3',
+					'demo_link'						 => 'http://envo-demos.com/envo-royal-woocommerce/home-free-woocommerce-3/',
+					'blog_title'					 => 'Blog',
+					'posts_to_show'					 => '6',
+					'elementor_width'				 => '1140',
+					'is_shop'						 => true,
+					'elementor_experiment-container' => 'active',
+					'woo_image_size'				 => '600',
+					'woo_thumb_size'				 => '300',
+					'woo_crop_width'				 => '2',
+					'woo_crop_height'				 => '3',
+					'required_plugins'				 => array(
+						'free'			 => array(
+							array(
+								'slug'	 => 'elementor',
+								'init'	 => 'elementor/elementor.php',
+								'name'	 => 'Elementor',
+							),
+							array(
+								'slug'	 => 'envo-elementor-for-woocommerce',
+								'init'	 => 'envo-elementor-for-woocommerce/elementor-templates-widgets-woocommerce.php',
+								'name'	 => 'Elementor Templates and Widgets',
+							),
+							array(
+								'slug'	 => 'woocommerce',
+								'init'	 => 'woocommerce/woocommerce.php',
+								'name'	 => 'WooCommerce',
+							),
+						),
+						'recommended'	 => array(
+							array(
+								'slug'	 => 'yith-woocommerce-wishlist',
+								'init'	 => 'yith-woocommerce-wishlist/init.php',
+								'name'	 => 'YITH WooCommerce Wishlist',
+							),
+							array(
+								'slug'	 => 'yith-woocommerce-compare',
+								'init'	 => 'yith-woocommerce-compare/init.php',
+								'name'	 => 'YITH WooCommerce Compare',
+							),
+						),
+						'premium'		 => array(),
+					),
+					'required_theme'		=> 'Envo Royal',
+					'required_theme_url'	=> 'https://envothemes.com/envo-royal-free-wp-theme/',
+				),
+			);
+			if ( 'Envo Royal' !== $theme->name ) {
+				$img_url = ENVO_URL . 'img/demos/envo-one/';
+				$url	 = 'http://envo-demos.com/wp-content/uploads/demo-import/envo-one/';
+				$data_one	 = array(
+					'envo-one-homepage-1' => array(
+						'demo_name'						 => 'Envo One Home #1',
 						'categories'					 => array( 'WooCommerce', 'Elementor', 'Free' ),
 						'xml_file'						 => $url . 'content.xml',
 						'theme_settings'				 => $url . 'customizer.dat',
 						'widgets_file'					 => $url . 'widgets.wie',
-						'screenshot'					 => $img_url . 'screenshot-1-new.webp',
-						'home_title'					 => 'Home Free #1',
-						'demo_link'						 => 'http://envo-demos.com/envo-royal/',
+						'screenshot'					 => $img_url . 'screenshot.webp',
+						'home_title'					 => 'Envo One Homepage',
+						'demo_link'						 => 'http://envo-demos.com/envo-one/',
 						'blog_title'					 => 'Blog',
 						'posts_to_show'					 => '6',
-						'elementor_width'				 => '1140',
+						'elementor_width'				 => '1270',
 						'is_shop'						 => true,
 						'elementor_experiment-container' => 'active',
 						'woo_image_size'				 => '600',
 						'woo_thumb_size'				 => '300',
-						'woo_crop_width'				 => '2',
-						'woo_crop_height'				 => '3',
+						'woo_crop_width'				 => '1',
+						'woo_crop_height'				 => '1',
 						'required_plugins'				 => array(
 							'free'			 => array(
 								array(
@@ -1201,38 +1541,56 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 									'init'	 => 'elementor/elementor.php',
 									'name'	 => 'Elementor',
 								),
-							),
-							'recommended'	 => array(
 								array(
 									'slug'	 => 'woocommerce',
 									'init'	 => 'woocommerce/woocommerce.php',
 									'name'	 => 'WooCommerce',
-									'notice' => 'For Shop purposes only',
+									'notice' => '',
+								),
+								array(
+									'slug'	 => 'envo-elementor-for-woocommerce',
+									'init'	 => 'envo-elementor-for-woocommerce/elementor-templates-widgets-woocommerce.php',
+									'name'	 => 'Elementor Templates and Widgets for WooCommerce',
+									'notice' => '',
+								),
+							),
+							'recommended'	 => array(
+								array(
+									'slug'	 => 'yith-woocommerce-wishlist',
+									'init'	 => 'yith-woocommerce-wishlist/init.php',
+									'name'	 => 'YITH WooCommerce Wishlist',
+									'notice' => 'WooCommerce Whishlist Function',
+								),
+								array(
+									'slug'	 => 'yith-woocommerce-compare',
+									'init'	 => 'yith-woocommerce-compare/init.php',
+									'name'	 => 'YITH WooCommerce Compare',
+									'notice' => 'WooCommerce Compare Function',
 								),
 							),
 							'premium'		 => array(),
 						),
-						'required_theme'		=> 'Envo Royal',
-						'required_theme_url'	=> 'https://envothemes.com/envo-royal-free-wp-theme/',
+						'required_theme'		=> 'Envo One',
+						'required_theme_url'	=> 'https://envothemes.com/envo-one-woocommerce/',
 					),
-					'home-free-2'	 => array(
-						'demo_name'						 => 'Envo Royal Home #2',
+					'envo-one-homepage-2'	 => array(
+						'demo_name'						 => 'Envo One Home #2',
 						'categories'					 => array( 'WooCommerce', 'Elementor', 'Free' ),
 						'xml_file'						 => $url . 'content.xml',
 						'theme_settings'				 => $url . 'customizer.dat',
 						'widgets_file'					 => $url . 'widgets.wie',
 						'screenshot'					 => $img_url . 'screenshot-2.webp',
-						'home_title'					 => 'Home Free #2',
-						'demo_link'						 => 'http://envo-demos.com/envo-royal/home-free-2/',
+						'home_title'					 => 'Envo One Homepage #2',
+						'demo_link'						 => 'http://envo-demos.com/envo-one/homepage-2/',
 						'blog_title'					 => 'Blog',
 						'posts_to_show'					 => '6',
-						'elementor_width'				 => '1140',
+						'elementor_width'				 => '1270',
 						'is_shop'						 => true,
 						'elementor_experiment-container' => 'active',
 						'woo_image_size'				 => '600',
 						'woo_thumb_size'				 => '300',
-						'woo_crop_width'				 => '2',
-						'woo_crop_height'				 => '3',
+						'woo_crop_width'				 => '1',
+						'woo_crop_height'				 => '1',
 						'required_plugins'				 => array(
 							'free'			 => array(
 								array(
@@ -1241,43 +1599,55 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 									'name'	 => 'Elementor',
 								),
 								array(
+									'slug'	 => 'woocommerce',
+									'init'	 => 'woocommerce/woocommerce.php',
+									'name'	 => 'WooCommerce',
+									'notice' => '',
+								),
+								array(
 									'slug'	 => 'envo-elementor-for-woocommerce',
 									'init'	 => 'envo-elementor-for-woocommerce/elementor-templates-widgets-woocommerce.php',
-									'name'	 => 'Elementor Templates and Widgets',
+									'name'	 => 'Elementor Templates and Widgets for WooCommerce',
 									'notice' => '',
 								),
 							),
 							'recommended'	 => array(
 								array(
-									'slug'	 => 'woocommerce',
-									'init'	 => 'woocommerce/woocommerce.php',
-									'name'	 => 'WooCommerce',
-									'notice' => 'For Shop purposes only',
+									'slug'	 => 'yith-woocommerce-wishlist',
+									'init'	 => 'yith-woocommerce-wishlist/init.php',
+									'name'	 => 'YITH WooCommerce Wishlist',
+									'notice' => 'WooCommerce Whishlist Function',
+								),
+								array(
+									'slug'	 => 'yith-woocommerce-compare',
+									'init'	 => 'yith-woocommerce-compare/init.php',
+									'name'	 => 'YITH WooCommerce Compare',
+									'notice' => 'WooCommerce Compare Function',
 								),
 							),
 							'premium'		 => array(),
 						),
-						'required_theme'		=> 'Envo Royal',
-						'required_theme_url'	=> 'https://envothemes.com/envo-royal-free-wp-theme/',
+						'required_theme'		=> 'Envo One',
+						'required_theme_url'	=> 'https://envothemes.com/envo-one-woocommerce/',
 					),
-					'home-free-3'	 => array(
-						'demo_name'						 => 'Envo Royal Home #3',
+					'envo-one-homepage-3'	 => array(
+						'demo_name'						 => 'Envo One Home #3',
 						'categories'					 => array( 'WooCommerce', 'Elementor', 'Free' ),
 						'xml_file'						 => $url . 'content.xml',
 						'theme_settings'				 => $url . 'customizer.dat',
 						'widgets_file'					 => $url . 'widgets.wie',
 						'screenshot'					 => $img_url . 'screenshot-3.webp',
-						'home_title'					 => 'Home Free #3',
-						'demo_link'						 => 'http://envo-demos.com/envo-royal/home-free-3/',
+						'home_title'					 => 'Envo One Homepage #3',
+						'demo_link'						 => 'http://envo-demos.com/envo-one/homepage-3/',
 						'blog_title'					 => 'Blog',
 						'posts_to_show'					 => '6',
-						'elementor_width'				 => '1140',
+						'elementor_width'				 => '1270',
 						'is_shop'						 => true,
 						'elementor_experiment-container' => 'active',
 						'woo_image_size'				 => '600',
 						'woo_thumb_size'				 => '300',
-						'woo_crop_width'				 => '2',
-						'woo_crop_height'				 => '3',
+						'woo_crop_width'				 => '1',
+						'woo_crop_height'				 => '1',
 						'required_plugins'				 => array(
 							'free'			 => array(
 								array(
@@ -1286,234 +1656,45 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 									'name'	 => 'Elementor',
 								),
 								array(
+									'slug'	 => 'woocommerce',
+									'init'	 => 'woocommerce/woocommerce.php',
+									'name'	 => 'WooCommerce',
+									'notice' => '',
+								),
+								array(
 									'slug'	 => 'envo-elementor-for-woocommerce',
 									'init'	 => 'envo-elementor-for-woocommerce/elementor-templates-widgets-woocommerce.php',
-									'name'	 => 'Elementor Templates and Widgets',
+									'name'	 => 'Elementor Templates and Widgets for WooCommerce',
 									'notice' => '',
 								),
 							),
 							'recommended'	 => array(
 								array(
-									'slug'	 => 'woocommerce',
-									'init'	 => 'woocommerce/woocommerce.php',
-									'name'	 => 'WooCommerce',
-									'notice' => 'For Shop purposes only',
-								),
-							),
-							'premium'		 => array(),
-						),
-						'required_theme'		=> 'Envo Royal',
-						'required_theme_url'	=> 'https://envothemes.com/envo-royal-free-wp-theme/',
-					),
-					'home-free-4'	 => array(
-						'demo_name'						 => 'Envo Royal Home #4',
-						'categories'					 => array( 'WooCommerce', 'Elementor', 'Free' ),
-						'xml_file'						 => $url . 'content.xml',
-						'theme_settings'				 => $url . 'customizer.dat',
-						'widgets_file'					 => $url . 'widgets.wie',
-						'screenshot'					 => $img_url . 'screenshot-4.webp',
-						'home_title'					 => 'Home Free #4',
-						'demo_link'						 => 'http://envo-demos.com/envo-royal/home-free-4/',
-						'blog_title'					 => 'Blog',
-						'posts_to_show'					 => '6',
-						'elementor_width'				 => '1140',
-						'is_shop'						 => true,
-						'elementor_experiment-container' => 'active',
-						'woo_image_size'				 => '600',
-						'woo_thumb_size'				 => '300',
-						'woo_crop_width'				 => '2',
-						'woo_crop_height'				 => '3',
-						'required_plugins'				 => array(
-							'free'			 => array(
-								array(
-									'slug'	 => 'elementor',
-									'init'	 => 'elementor/elementor.php',
-									'name'	 => 'Elementor',
-								),
-								array(
-									'slug'	 => 'envo-elementor-for-woocommerce',
-									'init'	 => 'envo-elementor-for-woocommerce/elementor-templates-widgets-woocommerce.php',
-									'name'	 => 'Elementor Templates and Widgets',
-									'notice' => '',
-								),
-							),
-							'recommended'	 => array(
-								array(
-									'slug'	 => 'woocommerce',
-									'init'	 => 'woocommerce/woocommerce.php',
-									'name'	 => 'WooCommerce',
-									'notice' => 'For Shop purposes only',
-								),
-							),
-							'premium'		 => array(),
-						),
-						'required_theme'		=> 'Envo Royal',
-						'required_theme_url'	=> 'https://envothemes.com/envo-royal-free-wp-theme/',
-					),
-					'home-free-woo-1'	 => array(
-						'demo_name'						 => 'Envo Royal Woo Home #1',
-						'categories'					 => array( 'WooCommerce', 'Elementor', 'Free' ),
-						'xml_file'						 => $url_woo . 'content.xml',
-						'theme_settings'				 => $url_woo . 'customizer.dat',
-						'widgets_file'					 => $url_woo . 'widgets.wie',
-						'screenshot'					 => $img_url . 'screenshot-woo-1.webp',
-						'home_title'					 => 'Home Free WooCommerce #1',
-						'demo_link'						 => 'http://envo-demos.com/envo-royal-woocommerce/home-free-woocommerce-1/',
-						'blog_title'					 => 'Blog',
-						'posts_to_show'					 => '6',
-						'elementor_width'				 => '1140',
-						'is_shop'						 => true,
-						'elementor_experiment-container' => 'active',
-						'woo_image_size'				 => '600',
-						'woo_thumb_size'				 => '300',
-						'woo_crop_width'				 => '2',
-						'woo_crop_height'				 => '3',
-						'required_plugins'				 => array(
-							'free'			 => array(
-								array(
-									'slug'	 => 'elementor',
-									'init'	 => 'elementor/elementor.php',
-									'name'	 => 'Elementor',
-								),
-								array(
-									'slug'	 => 'envo-elementor-for-woocommerce',
-									'init'	 => 'envo-elementor-for-woocommerce/elementor-templates-widgets-woocommerce.php',
-									'name'	 => 'Elementor Templates and Widgets',
-								),
-								array(
-									'slug'	 => 'woocommerce',
-									'init'	 => 'woocommerce/woocommerce.php',
-									'name'	 => 'WooCommerce',
-								),
-							),
-							'recommended'	 => array(
-								array(
 									'slug'	 => 'yith-woocommerce-wishlist',
 									'init'	 => 'yith-woocommerce-wishlist/init.php',
 									'name'	 => 'YITH WooCommerce Wishlist',
+									'notice' => 'WooCommerce Whishlist Function',
 								),
 								array(
 									'slug'	 => 'yith-woocommerce-compare',
 									'init'	 => 'yith-woocommerce-compare/init.php',
 									'name'	 => 'YITH WooCommerce Compare',
+									'notice' => 'WooCommerce Compare Function',
 								),
 							),
 							'premium'		 => array(),
 						),
-						'required_theme'		=> 'Envo Royal',
-						'required_theme_url'	=> 'https://envothemes.com/envo-royal-free-wp-theme/',
+						'required_theme'		=> 'Envo One',
+						'required_theme_url'	=> 'https://envothemes.com/envo-one-woocommerce/',
 					),
-					'home-free-woo-2'	 => array(
-						'demo_name'						 => 'Envo Royal Woo Home #2',
-						'categories'					 => array( 'WooCommerce', 'Elementor', 'Free' ),
-						'xml_file'						 => $url_woo . 'content.xml',
-						'theme_settings'				 => $url_woo . 'customizer.dat',
-						'widgets_file'					 => $url_woo . 'widgets.wie',
-						'screenshot'					 => $img_url . 'screenshot-woo-2.webp',
-						'home_title'					 => 'Home Free WooCommerce #2',
-						'demo_link'						 => 'http://envo-demos.com/envo-royal-woocommerce/home-free-woocommerce-2/',
-						'blog_title'					 => 'Blog',
-						'posts_to_show'					 => '6',
-						'elementor_width'				 => '1140',
-						'is_shop'						 => true,
-						'elementor_experiment-container' => 'active',
-						'woo_image_size'				 => '600',
-						'woo_thumb_size'				 => '300',
-						'woo_crop_width'				 => '2',
-						'woo_crop_height'				 => '3',
-						'required_plugins'				 => array(
-							'free'			 => array(
-								array(
-									'slug'	 => 'elementor',
-									'init'	 => 'elementor/elementor.php',
-									'name'	 => 'Elementor',
-								),
-								array(
-									'slug'	 => 'envo-elementor-for-woocommerce',
-									'init'	 => 'envo-elementor-for-woocommerce/elementor-templates-widgets-woocommerce.php',
-									'name'	 => 'Elementor Templates and Widgets',
-								),
-								array(
-									'slug'	 => 'woocommerce',
-									'init'	 => 'woocommerce/woocommerce.php',
-									'name'	 => 'WooCommerce',
-								),
-							),
-							'recommended'	 => array(
-								array(
-									'slug'	 => 'yith-woocommerce-wishlist',
-									'init'	 => 'yith-woocommerce-wishlist/init.php',
-									'name'	 => 'YITH WooCommerce Wishlist',
-								),
-								array(
-									'slug'	 => 'yith-woocommerce-compare',
-									'init'	 => 'yith-woocommerce-compare/init.php',
-									'name'	 => 'YITH WooCommerce Compare',
-								),
-							),
-							'premium'		 => array(),
-						),
-						'required_theme'		=> 'Envo Royal',
-						'required_theme_url'	=> 'https://envothemes.com/envo-royal-free-wp-theme/',
-					),
-					'home-free-woo-3'	 => array(
-						'demo_name'						 => 'Envo Royal Woo Home #3',
-						'categories'					 => array( 'WooCommerce', 'Elementor', 'Free' ),
-						'xml_file'						 => $url_woo . 'content.xml',
-						'theme_settings'				 => $url_woo . 'customizer.dat',
-						'widgets_file'					 => $url_woo . 'widgets.wie',
-						'screenshot'					 => $img_url . 'screenshot-woo-3.webp',
-						'home_title'					 => 'Home Free WooCommerce #3',
-						'demo_link'						 => 'http://envo-demos.com/envo-royal-woocommerce/home-free-woocommerce-3/',
-						'blog_title'					 => 'Blog',
-						'posts_to_show'					 => '6',
-						'elementor_width'				 => '1140',
-						'is_shop'						 => true,
-						'elementor_experiment-container' => 'active',
-						'woo_image_size'				 => '600',
-						'woo_thumb_size'				 => '300',
-						'woo_crop_width'				 => '2',
-						'woo_crop_height'				 => '3',
-						'required_plugins'				 => array(
-							'free'			 => array(
-								array(
-									'slug'	 => 'elementor',
-									'init'	 => 'elementor/elementor.php',
-									'name'	 => 'Elementor',
-								),
-								array(
-									'slug'	 => 'envo-elementor-for-woocommerce',
-									'init'	 => 'envo-elementor-for-woocommerce/elementor-templates-widgets-woocommerce.php',
-									'name'	 => 'Elementor Templates and Widgets',
-								),
-								array(
-									'slug'	 => 'woocommerce',
-									'init'	 => 'woocommerce/woocommerce.php',
-									'name'	 => 'WooCommerce',
-								),
-							),
-							'recommended'	 => array(
-								array(
-									'slug'	 => 'yith-woocommerce-wishlist',
-									'init'	 => 'yith-woocommerce-wishlist/init.php',
-									'name'	 => 'YITH WooCommerce Wishlist',
-								),
-								array(
-									'slug'	 => 'yith-woocommerce-compare',
-									'init'	 => 'yith-woocommerce-compare/init.php',
-									'name'	 => 'YITH WooCommerce Compare',
-								),
-							),
-							'premium'		 => array(),
-						),
-						'required_theme'		=> 'Envo Royal',
-						'required_theme_url'	=> 'https://envothemes.com/envo-royal-free-wp-theme/',
-					),
-				);
+				);				
+			}
 			if (defined('ENVO_PRO_CURRENT_VERSION') || defined('ENWOO_PRO_CURRENT_VERSION') || defined('ENVO_SHOPPER_PRO_CURRENT_VERSION') || defined('ENVO_ECOMMERCE_PRO_CURRENT_VERSION') || defined('ENVO_STOREFRONT_PRO_CURRENT_VERSION') || defined('ENVO_SHOP_PRO_CURRENT_VERSION') || defined('ENVO_ONLINE_STORE_PRO_CURRENT_VERSION') || defined('ENVO_MARKETPLACE_PRO_CURRENT_VERSION') || defined('ENVO_SHOPPER_PRO_CURRENT_VERSION')) {
 				$data_royal = array();
+				$data_one = array();
 			}
 			// combine the two arrays
+			$data		 = array_merge( $data, $data_one );
 			$data		 = array_merge( $data, $data_royal );
 			// Return
 			return apply_filters( 'envo_demos_data', $data );

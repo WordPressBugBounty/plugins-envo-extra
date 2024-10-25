@@ -59,7 +59,7 @@ function envo_extra_col() {
 }
 
 $theme = wp_get_theme();
-if ( 'Entr' == $theme->name || 'entr' == $theme->template ) {
+if ( 'Entr' == $theme->name || 'entr' == $theme->template || 'Envo One' == $theme->name || 'envo-one' == $theme->template ) {
 		
 	if (!envo_extra_envo_pro_is_activated()) {	
 		Kirki::add_section( 'envo-pro', array(
@@ -70,6 +70,8 @@ if ( 'Entr' == $theme->name || 'entr' == $theme->template ) {
 			'priority'	 => 1,
 		) );
 	}
+	$url = ($theme->template == 'envo-one') ? 'envo-one-woocommerce' :  strtolower($theme) .'-free-wp-theme/' ;
+	$docs = ($theme->template == 'envo-one') ? 'envo-one' :  'entr' ;
 	
 	Kirki::add_section( 'envo_documentation', array(
 		'title'		 => esc_attr__( 'Documentation and Demo', 'envo-extra' ),
@@ -80,7 +82,7 @@ if ( 'Entr' == $theme->name || 'entr' == $theme->template ) {
 		'settings'	 => 'envo_documentation_demo',
 		'section'	 => 'envo_documentation',
 		'priority'	 => 9,
-		'default'	 => 'You can use this theme to create a website like this <a href="https://envothemes.com/'. strtolower($theme) .'-free-wp-theme/" target="_blank">demo</a><br/>For step-by-step tutorials, see <a href="https://envothemes.com/docs/docs/entr/" target="_blank">Documentation</a>',
+		'default'	 => 'You can use this theme to create a website like this <a href="https://envothemes.com/'. $url .'" target="_blank">demo</a><br/>For step-by-step tutorials, see <a href="https://envothemes.com/docs/docs/'.$docs.'/" target="_blank">Documentation</a>',
 	) );
 	
 	Kirki::add_section( 'envo_demo_import', array(
@@ -93,7 +95,7 @@ if ( 'Entr' == $theme->name || 'entr' == $theme->template ) {
 		'settings'	 => 'envo_demo_import_demo',
 		'section'	 => 'envo_demo_import',
 		'priority'	 => 9,
-		'default'	 => sprintf( __( 'You can import the demo content with just one click. For step-by-step tutorial, see %1$s', 'envo-extra' ), '<a class="documentation" href="' . esc_url( 'https://envothemes.com/docs/docs/entr/one-click-demo-import/' ) . '" target="_blank">' . esc_html__( 'documentation', 'envo-extra' ) . '</a>' ),
+		'default'	 => sprintf( __( 'You can import the demo content with just one click. For step-by-step tutorial, see %1$s', 'envo-extra' ), '<a class="documentation" href="' . esc_url( 'https://envothemes.com/docs/docs/'.$docs.'/one-click-demo-import/' ) . '" target="_blank">' . esc_html__( 'documentation', 'envo-extra' ) . '</a>' ),
 	) );
 	Kirki::add_field( 'envo_extra', array(
 		'type'		 => 'custom',

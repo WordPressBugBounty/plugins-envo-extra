@@ -194,7 +194,7 @@ function envothemes_pro_notice_message() {
     $themetemplate = $theme->template;
 	if ($themetemplate == 'enwoo') {
 		$templateurl = 'https://enwoo-wp.com/enwoo-pro/';
-	} elseif ($themetemplate == 'entr') {
+	} elseif ($themetemplate == 'entr' || $themetemplate == 'envo-one') {
 		$templateurl = 'https://envothemes.com/envo-pro/';
 	} else {
 		$templateurl = 'https://envothemes.com/product/' . $themetemplate . '-pro/';
