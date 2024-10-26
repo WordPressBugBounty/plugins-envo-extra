@@ -1523,7 +1523,7 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 						'theme_settings'				 => $url . 'customizer.dat',
 						'widgets_file'					 => $url . 'widgets.wie',
 						'screenshot'					 => $img_url . 'screenshot.webp',
-						'home_title'					 => 'Envo One Homepage',
+						'home_title'					 => 'Envo One Homepage #1',
 						'demo_link'						 => 'http://envo-demos.com/envo-one/',
 						'blog_title'					 => 'Blog',
 						'posts_to_show'					 => '6',
