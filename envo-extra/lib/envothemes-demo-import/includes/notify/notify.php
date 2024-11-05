@@ -244,23 +244,23 @@ function envothemes_pro_dismiss() {
 
         return;
     }
-    $daysinseconds = 604800; // 14 Days in seconds (1209600).
+    $daysinseconds = 1209600; // 14 Days in seconds (1209600).
     $newtime = time() + $daysinseconds;
     update_site_option('envothemes_active_pro_time', $newtime);
 }
 
 /**
- * Envo Royal notice
+ * Envo One notice
  */
-function envo_extra_envo_royal_notice() {
+function envo_extra_envo_one_notice() {
 
-    envo_extra_envo_royal_dismiss();
+    envo_extra_envo_one_dismiss();
     
     $theme = wp_get_theme();
-    $activation_time = get_site_option('active_envo_time');
+    $activation_time = get_site_option('active_envo_one_time');
 
     if (!$activation_time) {
-        add_site_option('active_envo_time', time());
+        add_site_option('active_envo_one_time', time());
     }
 
     $daysinseconds = 600; // 1 Day in seconds.
@@ -269,43 +269,43 @@ function envo_extra_envo_royal_notice() {
         if (defined('ENVO_ROYAL_PRO_CURRENT_VERSION') || defined('ENTR_PRO_CURRENT_VERSION') || defined('ENWOO_PRO_CURRENT_VERSION') || defined('ENVO_ECOMMERCE_PRO_CURRENT_VERSION') || defined('ENVO_STOREFRONT_PRO_CURRENT_VERSION') || defined('ENVO_SHOP_PRO_CURRENT_VERSION') || defined('ENVO_ONLINE_STORE_PRO_CURRENT_VERSION') || defined('ENVO_MARKETPLACE_PRO_CURRENT_VERSION') || defined('ENVO_SHOPPER_PRO_CURRENT_VERSION')) {
             return;
         }
-        if ( 'Envo Royal' != $theme->name || 'envo-royal' != $theme->template ) {
-            add_action('admin_notices', 'envo_extra_envo_royal_notice_message');
+        if ( 'Envo One' != $theme->name || 'envo-one' != $theme->template ) {
+            add_action('admin_notices', 'envo_extra_envo_one_notice_message');
         }
     }
 }
 
-add_action('admin_init', 'envo_extra_envo_royal_notice');
+add_action('admin_init', 'envo_extra_envo_one_notice');
 
 /**
  * For shop notice 
  */
-function envo_extra_envo_royal_notice_message() {
+function envo_extra_envo_one_notice_message() {
 	if (isset($_SERVER['REQUEST_URI'])) {
 		$server = sanitize_text_field( wp_unslash($_SERVER['REQUEST_URI']));
 	}
     $scheme = (parse_url($server, PHP_URL_QUERY)) ? '&' : '?';
-    $url = $server . $scheme . 'envo_extra_envo_royal_dismiss=yes';
-    $dismiss_url = wp_nonce_url($url, 'envo-royal-nonce');
+    $url = $server . $scheme . 'envo_extra_envo_one_dismiss=yes';
+    $dismiss_url = wp_nonce_url($url, 'envo-one-nonce');
     ?>
 
     <div class="envo-review-notice envo-shop-notice">
         <div class="envo-review-thumbnail">
-            <img src="<?php echo esc_url(ENVO_EXTRA_PLUGIN_URL) . 'images/envo-royal.png'; ?>" alt="">
+            <img src="<?php echo esc_url(ENVO_EXTRA_PLUGIN_URL) . 'images/envo-one.png'; ?>" alt="">
         </div>
         <div class="envo-review-text">
-            <h3><?php esc_html_e('Try our new FREE Multipurpose and WooCommerce WordPress Theme - Envo Royal', 'envothemes-demo-import') ?></h3>
+            <h3><?php esc_html_e('Try our new FREE WooCommerce WordPress Theme - Envo One', 'envothemes-demo-import') ?></h3>
             <p>
                 <?php
                 echo sprintf(
-                        esc_html__('%1$s - new free Multipurpose and WooCommerce theme. Check out theme %2$s, that can be imported for FREE with simple click.', 'envothemes-demo-import'),
-                        '<a href="https://envothemes.com/envo-royal-free-wp-theme/" target="_blank">Envo Royal</a>',
-                        '<a href="https://envothemes.com/envo-royal-free-wp-theme/#demos" target="_blank">Demos</a>')
+                        esc_html__('%1$s - new free WooCommerce theme. Check out theme %2$s, that can be imported for FREE with simple click.', 'envothemes-demo-import'),
+                        '<a href="https://envothemes.com/envo-one-woocommerce/" target="_blank">Envo One</a>',
+                        '<a href="https://envothemes.com/envo-one-woocommerce/#demos" target="_blank">Demos</a>')
                 ?>
             </p>
             <ul class="envo-review-ul">
                 <li class="show-mor-message">
-                    <a href="https://envothemes.com/envo-royal-free-wp-theme/" target="_blank">
+                    <a href="https://envothemes.com/envo-one-woocommerce/" target="_blank">
                         <span class="dashicons dashicons-external"></span>
                         <?php esc_html_e('Show me more', 'envothemes-demo-import') ?>
                     </a>
@@ -326,26 +326,26 @@ function envo_extra_envo_royal_notice_message() {
 /**
  * For shop Dismiss! 
  */
-function envo_extra_envo_royal_dismiss() {
+function envo_extra_envo_one_dismiss() {
 
     if (!is_admin() ||
             !current_user_can('manage_options') ||
             !isset($_GET['_wpnonce']) ||
-            !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'envo-royal-nonce') ||
-            !isset($_GET['envo_extra_envo_royal_dismiss'])) {
+            !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'envo-one-nonce') ||
+            !isset($_GET['envo_extra_envo_one_dismiss'])) {
 
         return;
     }
     $daysinseconds = 1209600; // 14 Days in seconds (1209600).
     $newtime = time() + $daysinseconds;
-    update_site_option('active_envo_time', $newtime);
+    update_site_option('active_envo_one_time', $newtime);
 }
 
 function envo_extra_admin_notice_update_pro(){
 	
 	$theme = wp_get_theme();
     $themetemplate = $theme->template;
-	if ($themetemplate == 'entr') {
+	if ($themetemplate == 'entr' || $themetemplate == 'envo-one' ) {
 		$themetemplate = 'envo';
 	}
 	if ($themetemplate == 'enwoo') {

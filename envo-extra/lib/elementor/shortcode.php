@@ -43,36 +43,12 @@ class envo_extra_Shortcode {
 		if ( empty( $attributes[ 'id' ] ) ) {
 			return '';
 		}
+		if ( get_post_status ( $attributes[ 'id' ] ) != 'publish'  ) {
+			return '';
+		}
 
 		$response = Plugin::instance()->frontend->get_builder_content_for_display( $attributes[ 'id' ] );
 		return $response;
-	}
-
-	public function css_head() {
-
-		if ( class_exists( '\Elementor\Core\Files\CSS\Post' ) ) {
-			//$blog_id 	= get_theme_mod( 'enwoo_custom_blog_feed', '' );
-			$error_id	 = get_theme_mod( 'enwoo_custom_404', '' );
-			$header_id	 = get_theme_mod( 'enwoo_custom_header', '' );
-			$footer_id	 = get_theme_mod( 'enwoo_custom_footer', '' );
-
-//			if ( $blog_id != '' ) {
-//					$blog_css = new \Elementor\Core\Files\CSS\Post( $blog_id );
-//					$blog_css->enqueue();
-//			}
-			if ( $error_id != '' ) {
-				$error_css = new \Elementor\Core\Files\CSS\Post( $error_id );
-				$error_css->enqueue();
-			}
-			if ( $header_id != '' ) {
-				$header_css = new \Elementor\Core\Files\CSS\Post( $header_id );
-				$header_css->enqueue();
-			}
-			if ( $footer_id != '' ) {
-				$footer_css = new \Elementor\Core\Files\CSS\Post( $footer_id );
-				$footer_css->enqueue();
-			}
-		}
 	}
 
 	private function add_actions() {
@@ -82,8 +58,6 @@ class envo_extra_Shortcode {
 		}
 
 		add_shortcode( self::SHORTCODE, [ $this, 'shortcode' ] );
-
-		// add_action( 'wp_enqueue_scripts', [ $this, 'css_head' ] );
 	}
 
 }
