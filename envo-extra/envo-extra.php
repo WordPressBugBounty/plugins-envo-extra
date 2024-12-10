@@ -3,15 +3,15 @@
  * Plugin Name: Envo Extra
  * Plugin URI: https://envothemes.com/
  * Description: Extra addon for EnvoThemes Themes
- * Version: 1.9.4
+ * Version: 1.9.5
  * Author: EnvoThemes
  * Author URI: https://envothemes.com/
  * License: GPL-2.0+
  * Text Domain: envo-extra
  * Domain Path: /languages
  * WC requires at least: 3.3.0
- * WC tested up to: 9.4.0
- * Elementor tested up to: 3.25.0
+ * WC tested up to: 9.5.0
+ * Elementor tested up to: 3.26.0
  */
 // Exit if accessed directly.
 if ( !defined( 'ABSPATH' ) ) {
@@ -34,7 +34,7 @@ define( 'ENVO_EXTRA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'ENVO_EXTRA_PLUGIN_BASE', plugin_basename( __FILE__ ) );
 define( 'ENVO_EXTRA_PLUGIN_URL', plugins_url( '/', __FILE__ ) );
 
-add_action( 'plugins_loaded', 'envo_extra_load_textdomain' );
+add_action( 'init', 'envo_extra_load_textdomain' );
 
 function envo_extra_load_textdomain() {
 	load_plugin_textdomain( 'envo-extra', false, basename( dirname( __FILE__ ) ) . '/languages/' );

@@ -4,7 +4,7 @@ Author URI: https://envothemes.com/
 Plugin URL: https://envothemes.com/
 Requires at Least: 4.9
 Tested Up To: 6.7
-Stable tag: 1.9.4
+Stable tag: 1.9.5
 Requires PHP: 5.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -29,6 +29,12 @@ This plugin will only function with the [Enwoo](https://enwoo-wp.com/) or [Envo 
 
 == Changelog ==
 
+= 1.9.5 =
+* Fixed _load_textdomain_just_in_time issue
+* Fixed incorrectly loading dismiss button in theme notice
+* Tested with WooCommerce 9.5
+* Tested with Elementor 3.26
+
 = 1.9.4 =
 * Security update
 * Updated notifications
@@ -39,16 +45,16 @@ This plugin will only function with the [Enwoo](https://enwoo-wp.com/) or [Envo 
 = 1.9.2 =
 * Added support for Envo One theme
 * Tested with WP 6.7
-* Tested witn Elementor 3.25
+* Tested with Elementor 3.25
 
 = 1.9.1 =
 * Added option to hide header image on single post and archive pages (Envo Royal)
-* Tested witn Elementor 3.24
+* Tested with Elementor 3.24
 * Tested with WooCommerce 9.4
 
 = 1.9.0 =
 * Tested with WP 6.6
-* Tested witn Elementor 3.23
+* Tested with Elementor 3.23
 * Added new Envo Royal demo
 
 = 1.8.28 =
