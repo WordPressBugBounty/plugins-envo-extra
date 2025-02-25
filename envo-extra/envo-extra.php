@@ -3,15 +3,15 @@
  * Plugin Name: Envo Extra
  * Plugin URI: https://envothemes.com/
  * Description: Extra addon for EnvoThemes Themes
- * Version: 1.9.5
+ * Version: 1.9.6
  * Author: EnvoThemes
  * Author URI: https://envothemes.com/
  * License: GPL-2.0+
  * Text Domain: envo-extra
  * Domain Path: /languages
  * WC requires at least: 3.3.0
- * WC tested up to: 9.5.0
- * Elementor tested up to: 3.26.0
+ * WC tested up to: 9.7.0
+ * Elementor tested up to: 3.27.0
  */
 // Exit if accessed directly.
 if ( !defined( 'ABSPATH' ) ) {
@@ -253,7 +253,7 @@ if ( 'Enwoo' == $theme->name || 'enwoo' == $theme->template ) {
 	require_once( plugin_dir_path( __FILE__ ) . 'lib/admin/metabox.php' );
 	if (!envo_extra_check_for_pro('enwoo')) {	
 		Kirki::add_section( 'pro', array(
-			'title'       => esc_html__( 'More Options and Features', 'kirki' ),
+			'title'       => esc_html__( 'Unlock More Options', 'kirki' ),
 			'type'        => 'link',
 			'button_text' => esc_html__( 'Enwoo PRO', 'envo-extra' ),
 			'button_url'  => 'https://enwoo-wp.com/enwoo-pro/',
@@ -306,7 +306,7 @@ if ( 'Envo Royal' == $theme->name || 'envo-royal' == $theme->template ) {
 	require_once( plugin_dir_path( __FILE__ ) . 'lib/admin/metabox.php' );
 	if (!envo_extra_check_for_pro('envo-royal')) {	
 		Kirki::add_section( 'pro', array(
-			'title'       => esc_html__( 'More Options and Features', 'kirki' ),
+			'title'       => esc_html__( 'Unlock More Options', 'kirki' ),
 			'type'        => 'link',
 			'button_text' => esc_html__( 'Envo Royal PRO', 'envo-extra' ),
 			'button_url'  => 'https://envothemes.com/product/envo-royal-pro/',

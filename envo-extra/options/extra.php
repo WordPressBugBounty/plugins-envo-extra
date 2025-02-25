@@ -63,7 +63,7 @@ if ( 'Entr' == $theme->name || 'entr' == $theme->template || 'Envo One' == $them
 		
 	if (!envo_extra_envo_pro_is_activated()) {	
 		Kirki::add_section( 'envo-pro', array(
-			'title'       => esc_html__( 'More Options and Features', 'kirki' ),
+			'title'       => esc_html__( 'Unlock More Options', 'kirki' ),
 			'type'        => 'link',
 			'button_text' => esc_html__( 'Envo PRO', 'envo-extra' ),
 			'button_url'  => 'https://envothemes.com/product/envo-pro/',
