@@ -133,10 +133,10 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 			$data		 = array();
 			// Demos url
 			$img_url	 = ENVO_URL . 'img/demos/' . $theme->template . '/';
-			$url		 = 'http://envothemes.com/wp-content/uploads/demo-import/' . $theme->template . '/';
+			$source = get_option( 'envothemes_demo_import_url');
+			$url		 = $source . '/wp-content/uploads/demo-import/' . $theme->template . '/';
 
 			if ( 'Envo Shop' == $theme->name || 'envo-shop' == $theme->template ) {
-				$url		 = 'http://envo-demos.com/wp-content/uploads/demo-import/' . $theme->template . '/';
 				$data = array(
 					$theme->template => array(
 						'demo_name'			 => $theme->name,
@@ -331,7 +331,8 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 				);
 			} elseif ( 'Altr' == $theme->name ) {
 				$img_url = ENVO_URL . 'img/demos/altr/';
-				$url	 = 'http://envothemes.com/wp-content/uploads/demo-import/altr/';
+				
+				$url	 = $source . '/wp-content/uploads/demo-import/altr/';
 				$data	 = array(
 					$theme->template => array(
 						'demo_name'			 => $theme->name,
@@ -390,7 +391,7 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 				);
 			} elseif ( 'Spacr' == $theme->name ) {
 				$img_url = ENVO_URL . 'img/demos/spacr/';
-				$url	 = 'http://envothemes.com/wp-content/uploads/demo-import/spacr/';
+				$url	 = $source . '/wp-content/uploads/demo-import/spacr/';
 				$data	 = array(
 					$theme->template => array(
 						'demo_name'						 => $theme->name,
@@ -709,7 +710,7 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 				);
 			} elseif ( 'Lancr' == $theme->name || 'lancr' == $theme->template ) {
 				$img_url	 = ENVO_URL . 'img/demos/' . $theme->template . '/';
-				$enwoo_url		 = 'http://enwoo-wp.com/wp-content/uploads/demo-import/';
+				$enwoo_url		 = $source . '/wp-content/uploads/demo-import/enwoo/';
 				$data			 = array(
 					$theme->template => array(
 						'demo_name'			 => $theme->name,
@@ -806,7 +807,7 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 			} elseif ( 'Enwoo' == $theme->name ) {
 				// Enwoo Demos url
 				$img_url	 = ENVO_URL . 'img/demos/enwoo/';
-				$enwoo_url		 = 'http://enwoo-wp.com/wp-content/uploads/demo-import/';
+				$enwoo_url		 = $source . '/wp-content/uploads/demo-import/enwoo/';
 
 				$data	 = array(
 					'free-demo-8'	 => array(
@@ -1175,8 +1176,8 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 			}
 			
 			$img_url = ENVO_URL . 'img/demos/envo-royal/';
-			$url		= 'http://envo-demos.com/wp-content/uploads/demo-import/envo-royal/envo-royal/';
-			$url_woo	= 'http://envo-demos.com/wp-content/uploads/demo-import/envo-royal/envo-royal-woocommerce/';
+			$url		= $source . '/wp-content/uploads/demo-import/envo-royal/envo-royal/';
+			$url_woo	= $source . '/wp-content/uploads/demo-import/envo-royal/envo-royal-woocommerce/';
 			$data_royal	 = array(
 				'home-free-1' => array(
 					'demo_name'						 => 'Envo Royal Home #1',
@@ -1514,7 +1515,7 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 			);
 			if ( 'Envo Royal' !== $theme->name ) {
 				$img_url = ENVO_URL . 'img/demos/envo-one/';
-				$url	 = 'http://envo-demos.com/wp-content/uploads/demo-import/envo-one/';
+				$url	 = $source . '/wp-content/uploads/demo-import/envo-one/';
 				$data_one	 = array(
 					'envo-one-homepage-1' => array(
 						'demo_name'						 => 'Envo One Home #1',

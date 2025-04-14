@@ -4,7 +4,7 @@ function envo_extra_pro_get_demos_data( $data ) {
 
 	// Demos url
 	$url = ENVO_URL . 'img/demos/';
-
+	$source = get_option( 'envothemes_demo_import_url');
 	$extras	 = array(
 		'pro-demo-1' => array(
 			'demo_name'			 => 'Envo Royal PRO #1',

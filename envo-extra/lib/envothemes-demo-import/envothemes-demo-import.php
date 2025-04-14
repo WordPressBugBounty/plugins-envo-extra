@@ -187,8 +187,17 @@ final class EnvoThemes_Demo_Import {
  * Add Metadata on plugin activation.
  */
 function envo_extra_activate() {
+	$source = '';
+	if ( 'Enwoo' == $theme->name || 'enwoo' == $theme->template ) {
+		$source = 'https://enwoo-wp.com';
+	} elseif ( 'Envo Royal' == $theme->name || 'envo-royal' == $theme->template || 'Envo One' == $theme->name || 'envo-one' == $theme->template || 'Envo Shop' == $theme->name || 'envo-shop' == $theme->template ) {
+		$source = 'https://envo-demos.com';
+	} else {
+		$source = 'https://envothemes.com';
+	}
     add_site_option('envothemes_active_time', time());
     add_site_option('envothemes_active_pro_time', time());
+	add_option('envothemes_demo_import_url', esc_url($source));
     add_option('envothemes_activation_redirect', true);
 }
 
