@@ -3,7 +3,7 @@
  * Plugin Name: Envo Extra
  * Plugin URI: https://envothemes.com/
  * Description: Extra addon for EnvoThemes Themes
- * Version: 1.9.8
+ * Version: 1.9.9
  * Author: EnvoThemes
  * Author URI: https://envothemes.com/
  * License: GPL-2.0+
@@ -240,7 +240,12 @@ if ( !function_exists( 'envo_extra_dashboard' ) ) {
 	}
 
 }
-require_once( plugin_dir_path( __FILE__ ) . 'options/extra.php' );
+
+function envo_extra_functions() {
+	require_once( plugin_dir_path( __FILE__ ) . 'options/extra.php' );
+}
+add_action( 'after_setup_theme', 'envo_extra_functions' );
+
 $theme = wp_get_theme();
 if ( 'Enwoo' == $theme->name || 'enwoo' == $theme->template ) {
 
@@ -298,26 +303,38 @@ if ( 'Envo Royal' == $theme->name || 'envo-royal' == $theme->template ) {
 
 	add_action( 'customize_register', 'envo_extra_custom_customizer_control' );
 
-
-	require_once( plugin_dir_path( __FILE__ ) . 'lib/admin/metabox.php' );
-	if ( !envo_extra_check_for_pro( 'envo-royal' ) ) {
-		Kirki::add_section( 'pro', array(
-			'title'			 => esc_html__( 'Unlock More Options', 'kirki' ),
-			'type'			 => 'link',
-			'button_text'	 => esc_html__( 'Envo Royal PRO', 'envo-extra' ),
-			'button_url'	 => 'https://envothemes.com/product/envo-royal-pro/',
-			'priority'		 => 1,
-		) );
-		require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/pro.php' );
-		require_once( plugin_dir_path( __FILE__ ) . 'lib/envothemes-demo-import/includes/panel/envo-royal-pro-demos.php' );
-	}
-
-	Kirki::add_panel( 'envo_theme_panel', array(
-		'title'		 => esc_attr__( 'Theme Options', 'envo-extra' ),
-		'priority'	 => 5,
-	) );
-
 	function envo_extra_check_for_woocommerce() {
+  
+      require_once( plugin_dir_path( __FILE__ ) . 'lib/admin/metabox.php' );
+    	if ( !envo_extra_check_for_pro( 'envo-royal' ) ) {
+    		Kirki::add_section( 'pro', array(
+    			'title'			 => esc_html__( 'Unlock More Options', 'kirki' ),
+    			'type'			 => 'link',
+    			'button_text'	 => esc_html__( 'Envo Royal PRO', 'envo-extra' ),
+    			'button_url'	 => 'https://envothemes.com/product/envo-royal-pro/',
+    			'priority'		 => 1,
+    		) );
+    		require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/pro.php' );
+    		require_once( plugin_dir_path( __FILE__ ) . 'lib/envothemes-demo-import/includes/panel/envo-royal-pro-demos.php' );
+    	}
+
+    	Kirki::add_panel( 'envo_theme_panel', array(
+    		'title'		 => esc_attr__( 'Theme Options', 'envo-extra' ),
+    		'priority'	 => 5,
+    	) );
+  
+  
+    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/color-preset.php' );
+    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/top-bar.php' );
+    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/header.php' );
+    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/main-menu.php' );
+    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/footer-credits.php' );
+    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/footer-widgets.php' );
+    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/main-colors.php' );
+    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/posts-pages.php' );
+    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/sidebar.php' );
+    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/back-to-top.php' );
+    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/custom-codes.php' );
 		if ( !defined( 'WC_VERSION' ) ) {
 			// no woocommerce :(
 		} else {
@@ -326,18 +343,7 @@ if ( 'Envo Royal' == $theme->name || 'envo-royal' == $theme->template ) {
 		}
 	}
 
-	add_action( 'plugins_loaded', 'envo_extra_check_for_woocommerce' );
-	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/color-preset.php' );
-	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/top-bar.php' );
-	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/header.php' );
-	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/main-menu.php' );
-	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/footer-credits.php' );
-	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/footer-widgets.php' );
-	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/main-colors.php' );
-	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/posts-pages.php' );
-	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/sidebar.php' );
-	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/back-to-top.php' );
-	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/custom-codes.php' );
+	add_action( 'after_setup_theme', 'envo_extra_check_for_woocommerce' );
 
 	add_action( 'init', 'envo_extra_dashboard' );
 	add_action( 'init', 'envo_extra_recommended_plugins' );
@@ -361,6 +367,29 @@ function envo_extra_plugin_load() {
 }
 
 add_action( 'customize_register', 'envo_extra_theme_customize_register', 99 );
+
+function envo_extra_fonts() {
+    if (envo_extra_check_for_pro('enwoo') || envo_extra_check_for_pro('envo-royal')) {
+        $fonts = array();
+    } else {
+        $fonts = array(
+                'google' => array(
+                    'Roboto',
+                    'Open Sans',
+                    'Lato',
+                    'Roboto Condensed',
+                    'Slabo 27px',
+                    'Montserrat',
+                    'Oswald',
+                    'Source Sans Pro',
+                    'Raleway',
+                    'Merriweather',
+                ),
+            );
+    }
+    return $fonts;
+}
+add_action( 'admin_init', 'envo_extra_fonts' );
 
 function envo_extra_theme_customize_register( $wp_customize ) {
 

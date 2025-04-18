@@ -17,29 +17,6 @@ function envo_extra_reset_mod() {
   }
 }
 
-function envo_extra_fonts() {
-    if (envo_extra_check_for_pro('enwoo') || envo_extra_check_for_pro('envo-royal')) {
-        $fonts = array();
-    } else {
-        $fonts = array(
-                'google' => array(
-                    'Roboto',
-                    'Open Sans',
-                    'Lato',
-                    'Roboto Condensed',
-                    'Slabo 27px',
-                    'Montserrat',
-                    'Oswald',
-                    'Source Sans Pro',
-                    'Raleway',
-                    'Merriweather',
-                ),
-            );
-    }
-    return $fonts;
-}
-add_action( 'admin_init', 'envo_extra_fonts' );
-
 function envo_extra_envo_pro_is_activated() {
 	require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
 	return is_plugin_active( 'envo-pro/envo-pro.php' );
