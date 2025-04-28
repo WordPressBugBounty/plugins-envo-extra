@@ -78,7 +78,8 @@ class envo_Install_Demos {
 		                type: "POST",
 		                data: {
 		                    action: "save_domain_switcher",
-		                    domain: domainValue
+		                    domain: domainValue,
+							security: "<?php echo wp_create_nonce( 'save_domain_switcher_nonce' ); ?>" // Add nonce for security
 		                },
 		                success: function ( response ) {
 		                    // Optionally show success message or log response
@@ -93,7 +94,7 @@ class envo_Install_Demos {
 		</script>
 		<div class="server-switcher wrap">
 			<form method="post" action="">
-				<?php wp_nonce_field( 'domain_switcher_nonce', 'domain_switcher_nonce_field' ); ?>
+				<?php wp_nonce_field( 'save_domain_switcher_nonce', 'save_domain_switcher_nonce' ); ?>
 
 				<label for="domain_switcher_toggle">If the <b>import failed</b>, try switching the demo source server.</label><br>
 
@@ -113,6 +114,10 @@ class envo_Install_Demos {
 
 	// Save the selected domain option via AJAX
 	public function save_domain_switcher_ajax() {
+		
+		if ( !current_user_can( 'manage_options' ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ 'security' ] ) ), 'save_domain_switcher_nonce' ) ) {
+			die( 'This action was stopped for security purposes.' );
+		}
 		// Check if a valid request is made
 		if ( isset( $_POST[ 'domain' ] ) ) {
 			$new_domain = sanitize_text_field( $_POST[ 'domain' ] );
