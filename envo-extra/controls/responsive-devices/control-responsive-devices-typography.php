@@ -57,7 +57,7 @@ class Envo_Extra_Customize_Responsive_Devices_Typography extends Kirki\Control\B
 	),
 	'tablet'	 => array(
 		'media_query_key'	 => 'media_query',
-		'media_query'		 => '@media (max-width: 991px)',
+		'media_query'		 => '@media (min-width: 768px) and (max-width: 991px)',
 		'description'		 => 'Tablet',
 	),
 	'mobile'	 => array(

@@ -15,7 +15,7 @@ $devices = array(
     ),
     'tablet' => array(
         'media_query_key' => 'media_query',
-        'media_query' => '@media (max-width: 991px)',
+        'media_query' => '@media (min-width: 768px) and (max-width: 991px)',
     ),
     'mobile' => array(
         'media_query_key' => 'media_query',
