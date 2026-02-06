@@ -754,6 +754,8 @@ class Counter extends Widget_Base {
 		$attr		 = $settings[ 'link' ][ 'url' ] ? ' href="' . esc_url($settings[ 'link' ][ 'url' ]) . '"' : '';
 		$attr .= $settings[ 'link' ][ 'is_external' ] ? ' target="_blank"' : '';
 		$attr .= $settings[ 'link' ][ 'nofollow' ] ? ' rel="nofollow"' : '';
+		$allowed_tags = [ 'h1','h2','h3','h4','h5','h6','div','span','p' ];
+		$title_tag = in_array( $settings['title_tag'], $allowed_tags, true ) ? $settings['title_tag'] : 'h3';
 		?>
 
 		<<?php echo esc_attr( $html_tag ); ?> <?php echo wp_kses_data( $attr ); ?> class="envo-extra-counter-wrapper">
@@ -769,7 +771,7 @@ class Counter extends Widget_Base {
 			<div class="envo-extra-counter-content">
 				<?php
 				if ( $settings[ 'title' ] ) :
-					printf( '<%1$s %2$s>%3$s</%1$s>', tag_escape( $settings[ 'title_tag' ] ), $this->get_render_attribute_string( 'title' ), $settings[ 'title' ] ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					printf( '<%1$s %2$s>%3$s</%1$s>', tag_escape( $title_tag ), $this->get_render_attribute_string( 'title' ), $settings[ 'title' ] ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				endif;
 				if ( $settings[ 'description' ] ) :
 					?>

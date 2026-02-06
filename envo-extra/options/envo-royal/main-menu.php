@@ -123,7 +123,7 @@ Kirki::add_field( 'envo_extra', array(
 	'type'		 => 'custom',
 	'settings'	 => 'typography_mainmenu_separator_bottom',
 	'section'	 => 'main_menu',
-	'priority'	 => 20,
+	'priority'	 => 19,
 	'default'	 => '<hr style="border-top: 1px solid #ccc; border-bottom: 1px solid #f8f8f8; margin: 0;">',
 ) );
 

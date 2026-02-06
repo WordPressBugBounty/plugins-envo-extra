@@ -363,3 +363,102 @@ function envo_extra_admin_notice_update_pro(){
 	$button = '<p><a href="' . esc_url(admin_url( 'update-core.php?force-check=1')) . '" class="button-secondary">' . esc_html($button_text) . '</a><a href="' . esc_url($changelogurl) . '" target="_blank" class="envo-link-changelog" style="margin-left:10px;margin-top: 4px;display: inline-block;">' . esc_html('Changelog') . '</a><a href="' . esc_url($updateurl) . '" target="_blank" class="envo-link" style="margin-left:10px;margin-top: 4px;display: inline-block;">' . esc_html('How to update?') . '</a></p>';
 	printf( '<div class="error"><p>%1$s</p>%2$s</div>', $message, $button );
 }
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * Display the dismissible admin notice.
+ */
+function envo_extra_admin_notice_promo() {
+
+    // Unique notice ID
+    $notice_id = 'envo_extra_admin_notice_promo';
+	
+	// Set expiration time
+    $expire = strtotime('2026-3-31 23:59:59');
+
+    // Stop running after this date
+    if ( time() > $expire ) {
+        return;
+    }
+	
+	if(
+		(defined('ENVO_ROYAL_PRO_CURRENT_VERSION')) ||
+		(defined('ENTR_PRO_CURRENT_VERSION')) ||
+		(defined('ENVO_STOREFRONT_PRO_CURRENT_VERSION')) ||
+		(defined('ENVO_SHOP_PRO_CURRENT_VERSION')) ||
+		(defined('ENVO_ONLINE_STORE_PRO_CURRENT_VERSION')) ||
+		(defined('ENVO_SHOPPER_PRO_CURRENT_VERSION')) ||
+		(defined('ENVO_MARKETPLACE_PRO_CURRENT_VERSION')) ||
+		(defined('ENWOO_PRO_CURRENT_VERSION')) ||
+		(defined('ENVO_ECOMMERCE_PRO_CURRENT_VERSION')) ||
+		(defined('ENVO_MAGAZINE_PRO_CURRENT_VERSION'))
+	)	{return;}
+
+    // Get the dismissal timestamp
+    $dismissed_timestamp = get_user_meta( get_current_user_id(), $notice_id, true );
+
+    // Only hide if dismissed within the last 2 days (172800 seconds)
+    if ( $dismissed_timestamp && ( time() - intval( $dismissed_timestamp ) < 2 * DAY_IN_SECONDS ) ) {
+        return;
+    }
+
+    // Create dismissal URL with nonce
+    $dismiss_url = wp_nonce_url(
+        add_query_arg(
+            array(
+                'envo-extra-dismiss' => $notice_id,
+            )
+        ),
+        'envo_extra_dismiss_' . $notice_id
+    );
+    ?>
+    <div class="notice notice-info is-dismissible envo-extra-notice" data-dismiss-url="<?php echo esc_url( $dismiss_url ); ?>">
+        <p><span class="dashicons dashicons-tag" style="color:red"></span>
+			<?php 
+			echo sprintf(
+					esc_html__('Exclusive EnvoThemes SALE. %1$s Use discount coupon: %2$s', 'envothemes-demo-import'),
+					'<a href="https://envothemes.com/" target="_blank"><b>Upgrade Now and Save 20%.</b></a>',
+					'<b>Envo2026</b> <a href="https://envothemes.com/" target="_blank">Visit Site</a>')
+			?>
+		</p>
+    </div>
+
+    <script>
+        (function($){
+            $(document).on('click', '.envo-extra-notice .notice-dismiss', function () {
+                var url = $(this).closest('.envo-extra-notice').data('dismiss-url');
+                $.get(url);
+            });
+        })(jQuery);
+    </script>
+    <?php
+}
+add_action( 'admin_notices', 'envo_extra_admin_notice_promo' );
+
+
+/**
+ * Handle notice dismissal.
+ */
+function envo_extra_handle_dismiss() {
+
+    if ( ! isset( $_GET['envo-extra-dismiss'] ) ) {
+        return;
+    }
+
+    $notice_id = sanitize_key( $_GET['envo-extra-dismiss'] );
+
+    // Verify nonce
+    if (
+        ! isset( $_GET['_wpnonce'] ) ||
+        ! wp_verify_nonce( $_GET['_wpnonce'], 'envo_extra_dismiss_' . $notice_id )
+    ) {
+        return;
+    }
+
+    // Save current time as dismissal timestamp
+    update_user_meta( get_current_user_id(), $notice_id, time() );
+}
+add_action( 'admin_init', 'envo_extra_handle_dismiss' );

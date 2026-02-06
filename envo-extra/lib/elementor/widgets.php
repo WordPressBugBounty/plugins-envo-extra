@@ -33,7 +33,7 @@ final class Enwoo_Extra_Elementor_Extension {
 	 */
 	public function register_widgets() {
 
-		
+
 		foreach ( $this->modules as $key => $value ) {
 			require_once ENVO_EXTRA_PATH . 'lib/elementor/widgets/' . $key . '/' . $key . '.php';
 			\Elementor\Plugin::instance()->widgets_manager->register( new $value[ 'class' ]() );
@@ -50,6 +50,7 @@ final class Enwoo_Extra_Elementor_Extension {
 	public function widget_scripts() {
 		
 	}
+
 	public function editor_scripts() {
 		wp_register_script( 'preview-script-elmn', ENVO_EXTRA_PLUGIN_URL . 'lib/elementor/assets/js/elementor.js', [ 'elementor-editor' ], ELEMENTOR_VERSION, true );
 
@@ -65,7 +66,7 @@ final class Enwoo_Extra_Elementor_Extension {
 	 * @access public
 	 */
 	public function widget_scripts_preview() {
-
+		
 	}
 
 	/**
@@ -76,18 +77,17 @@ final class Enwoo_Extra_Elementor_Extension {
 	 * @access public
 	 */
 	public function widget_styles() {
-		
-		foreach ($this->modules as $key => $value) {
-            wp_register_style('envo-extra-' . $key . '', ENVO_EXTRA_PLUGIN_URL . 'lib/elementor/assets/css/' . $key . '/' . $key . '.css');
-        }
+
+		foreach ( $this->modules as $key => $value ) {
+			wp_register_style( 'envo-extra-' . $key . '', ENVO_EXTRA_PLUGIN_URL . 'lib/elementor/assets/css/' . $key . '/' . $key . '.css' );
+		}
 		wp_register_style( 'font-awesome-5-all', ELEMENTOR_ASSETS_URL . 'lib/font-awesome/css/all.min.css', false );
 	}
 
 	public function widget_styles_preview() {
-		foreach ($this->modules as $key => $value) {
-            wp_register_style('envo-extra-' . $key . '', ENVO_EXTRA_PLUGIN_URL . 'lib/elementor/assets/css/' . $key . '/' . $key . '.css');
-        }
-		
+		foreach ( $this->modules as $key => $value ) {
+			wp_register_style( 'envo-extra-' . $key . '', ENVO_EXTRA_PLUGIN_URL . 'lib/elementor/assets/css/' . $key . '/' . $key . '.css' );
+		}
 	}
 
 	public function add_elementor_widget_categories( $elements_manager ) {
@@ -108,7 +108,7 @@ final class Enwoo_Extra_Elementor_Extension {
 	 * @access public
 	 */
 	public function __construct() {
-		
+
 		add_action( 'elementor/widgets/register', [$this, 'register_widgets' ] );
 		// Register Widget Styles
 		add_action( 'elementor/frontend/after_register_styles', [$this, 'widget_styles' ] );
@@ -122,7 +122,7 @@ final class Enwoo_Extra_Elementor_Extension {
 		add_action( 'elementor/elements/categories_registered', [$this, 'add_elementor_widget_categories' ] );
 
 		add_action( 'elementor/preview/enqueue_styles', [$this, 'widget_styles_preview' ] );
-		
+
 		$this->modules = array(
 			'block-quote'	 => array(
 				'class' => 'Envo_Block_Quote',
@@ -136,7 +136,7 @@ final class Enwoo_Extra_Elementor_Extension {
 			'heading'		 => array(
 				'class' => 'Heading',
 			),
-			'team'		 => array(
+			'team'			 => array(
 				'class' => 'Team',
 			),
 			'icon-box'		 => array(

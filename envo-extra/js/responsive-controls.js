@@ -91,7 +91,7 @@ jQuery( document ).ready( function ( $ ) {
 } );
 
 jQuery( document ).ready( function ( $ ) {
-    
+
     // Let's use the API.
     var api = wp.customize;
 
@@ -99,7 +99,7 @@ jQuery( document ).ready( function ( $ ) {
     $( '.show-kirki-control.dashicons-edit' ).click( function ( e ) {
         $( '.envo-control-desktop' ).removeClass( 'active' );
         // we go 2 parents up, to find the '.customize-control-kirki-custom' element, and toggle it
-        $( this ).parents().eq( 2 ).nextUntil( '.customize-control-kirki-custom' ).toggleClass( 'active' ).toggleClass('activated');
+        $( this ).parents().eq( 2 ).nextUntil( '.customize-control-kirki-custom' ).toggleClass( 'active' ).toggleClass( 'activated' );
         $( '.envo-control-tablet' ).removeClass( 'active' );
         $( '.envo-control-mobile' ).removeClass( 'active' );
         // toggle the devices buttons
@@ -113,7 +113,7 @@ jQuery( document ).ready( function ( $ ) {
         // prevent default behaviour if element is clicked (page jump)
         e.preventDefault();
     } );
-    
+
 
 
 

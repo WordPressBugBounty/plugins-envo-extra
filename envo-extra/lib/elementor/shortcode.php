@@ -43,7 +43,7 @@ class envo_extra_Shortcode {
 		if ( empty( $attributes[ 'id' ] ) ) {
 			return '';
 		}
-		if ( get_post_status ( $attributes[ 'id' ] ) != 'publish'  ) {
+		if ( get_post_status( $attributes[ 'id' ] ) != 'publish' ) {
 			return '';
 		}
 

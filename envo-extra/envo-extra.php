@@ -3,7 +3,7 @@
  * Plugin Name: Envo Extra
  * Plugin URI: https://envothemes.com/
  * Description: Extra addon for EnvoThemes Themes
- * Version: 1.9.11
+ * Version: 1.9.16
  * Author: EnvoThemes
  * Author URI: https://envothemes.com/
  * License: GPL-2.0+
@@ -56,6 +56,9 @@ function envo_extra_scripts() {
 
 add_action( 'wp_enqueue_scripts', 'envo_extra_scripts' );
 
+function envo_extra_admin_scripts() {
+    wp_enqueue_script( 'preview-script-elmn', ENVO_EXTRA_PLUGIN_URL . 'lib/elementor/assets/js/elementor.js', [ ], ENVO_EXTRA_CURRENT_VERSION, true );
+}
 //Dequeue Styles
 function envo_extra_dequeue_unnecessary_styles() {
 	$value = get_theme_mod( 'main_typographydesktop', array() );
@@ -443,106 +446,107 @@ if ( !function_exists( 'envo_extra_widget_date_comments' ) ) :
 				<?php } ?>
 			<i class="fa fa-comments-o"></i>
 		</span>
-			<?php
-		}
-
-	endif;
-
-	/**
-	 * Check Elementor plugin
-	 */
-	function envo_extra_check_for_elementor() {
-		require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-		return is_plugin_active( 'elementor/elementor.php' );
+		<?php
 	}
 
-	/**
-	 * Check Elementor PRO plugin
-	 */
-	function envo_extra_check_for_elementor_pro() {
-		require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-		return is_plugin_active( 'elementor-pro/elementor-pro.php' );
+endif;
+
+/**
+ * Check Elementor plugin
+ */
+function envo_extra_check_for_elementor() {
+	require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+	return is_plugin_active( 'elementor/elementor.php' );
+}
+
+/**
+ * Check Elementor PRO plugin
+ */
+function envo_extra_check_for_elementor_pro() {
+	require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+	return is_plugin_active( 'elementor-pro/elementor-pro.php' );
+}
+
+/**
+ * Register Elementor features
+ */
+if ( envo_extra_check_for_elementor() ) {
+	if ( !envo_extra_check_for_elementor_pro() ) {
+		include_once( plugin_dir_path( __FILE__ ) . 'lib/elementor/shortcode.php' );
+		add_action( 'admin_enqueue_scripts', 'envo_extra_admin_scripts' );
+	}
+}
+
+include_once( plugin_dir_path( __FILE__ ) . 'lib/elementor/widgets.php' );
+
+function envo_extra_activate_fc() {
+	$arr	 = array( '' );
+	$theme	 = wp_get_theme();
+	if ( 'Enwoo' == $theme->name || 'enwoo' == $theme->template ) {
+		$arr = array(
+			'Created with <a href="https://enwoo-wp.com/free-woocommerce-theme/" title="Free WooCommerce WordPress Theme">Enwoo</a> WordPress theme',
+			'Created with <a href="https://enwoo-wp.com/free-business-wp-theme/" title="Free Business WordPress Theme">Enwoo</a> WordPress theme',
+			'Created with <a href="https://enwoo-wp.com/" title="Free Multipurpose WordPress Theme">Enwoo</a> WordPress theme',
+		);
+	} elseif ( 'Envo Royal' == $theme->name || 'envo-royal' == $theme->template ) {
+		$arr = array(
+			'Created with <a href="https://envothemes.com/envo-royal-free-wp-theme/" title="Free Multipurpose WordPress Theme">Envo Royal</a> WordPress theme',
+		);
 	}
 
-	/**
-	 * Register Elementor features
-	 */
-	if ( envo_extra_check_for_elementor() ) {
-		if ( !envo_extra_check_for_elementor_pro() ) {
-			include_once( plugin_dir_path( __FILE__ ) . 'lib/elementor/shortcode.php' );
-		}
+	$key = array_rand( $arr );
+
+	update_site_option( 'et_fc', $arr[ $key ] );
+}
+
+add_action( 'after_switch_theme', 'envo_extra_activate_fc' );
+register_activation_hook( __FILE__, 'envo_extra_activate_fc' );
+
+
+
+register_activation_hook( __FILE__, 'envo_extra_plugin_activate' );
+add_action( 'admin_init', 'envo_extra_plugin_redirect' );
+add_action( 'after_switch_theme', 'envo_extra_theme_redirect' );
+
+function envo_extra_plugin_activate() {
+	add_option( 'envo_plugin_do_activation_redirect', true );
+}
+
+/**
+ * Check PRO plugin
+ */
+function envo_extra_check_for_pro( $plugin ) {
+	if ( in_array( $plugin . '-pro/' . $plugin . '-pro.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+		return true;
 	}
+	return;
+}
 
-	include_once( plugin_dir_path( __FILE__ ) . 'lib/elementor/widgets.php' );
-
-	function envo_extra_activate_fc() {
-		$arr	 = array( '' );
-		$theme	 = wp_get_theme();
-		if ( 'Enwoo' == $theme->name || 'enwoo' == $theme->template ) {
-			$arr = array(
-				'Created with <a href="https://enwoo-wp.com/free-woocommerce-theme/" title="Free WooCommerce WordPress Theme">Enwoo</a> WordPress theme',
-				'Created with <a href="https://enwoo-wp.com/free-business-wp-theme/" title="Free Business WordPress Theme">Enwoo</a> WordPress theme',
-				'Created with <a href="https://enwoo-wp.com/" title="Free Multipurpose WordPress Theme">Enwoo</a> WordPress theme',
-			);
-		} elseif ( 'Envo Royal' == $theme->name || 'envo-royal' == $theme->template ) {
-			$arr = array(
-				'Created with <a href="https://envothemes.com/envo-royal-free-wp-theme/" title="Free Multipurpose WordPress Theme">Envo Royal</a> WordPress theme',
-			);
-		}
-
-		$key = array_rand( $arr );
-
-		update_site_option( 'et_fc', $arr[ $key ] );
-	}
-
-	add_action( 'after_switch_theme', 'envo_extra_activate_fc' );
-	register_activation_hook( __FILE__, 'envo_extra_activate_fc' );
-
-
-
-	register_activation_hook( __FILE__, 'envo_extra_plugin_activate' );
-	add_action( 'admin_init', 'envo_extra_plugin_redirect' );
-	add_action( 'after_switch_theme', 'envo_extra_theme_redirect' );
-
-	function envo_extra_plugin_activate() {
-		add_option( 'envo_plugin_do_activation_redirect', true );
-	}
-
-	/**
-	 * Check PRO plugin
-	 */
-	function envo_extra_check_for_pro( $plugin ) {
-		if ( in_array( $plugin . '-pro/' . $plugin . '-pro.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
-			return true;
-		}
-		return;
-	}
-
-	/**
-	 * Redirect after plugin activation
-	 */
-	function envo_extra_plugin_redirect() {
-		if ( get_option( 'envo_plugin_do_activation_redirect', false ) ) {
-			delete_option( 'envo_plugin_do_activation_redirect' );
-			if ( !is_network_admin() || !isset( $_GET[ 'activate-multi' ] ) ) {
-				wp_redirect( 'themes.php?page=envothemes-panel-install-demos' );
-			}
-		}
-	}
-
-	/**
-	 * Redirect after plugin activation
-	 */
-	function envo_extra_theme_redirect() {
+/**
+ * Redirect after plugin activation
+ */
+function envo_extra_plugin_redirect() {
+	if ( get_option( 'envo_plugin_do_activation_redirect', false ) ) {
+		delete_option( 'envo_plugin_do_activation_redirect' );
 		if ( !is_network_admin() || !isset( $_GET[ 'activate-multi' ] ) ) {
 			wp_redirect( 'themes.php?page=envothemes-panel-install-demos' );
 		}
 	}
+}
 
-	/**
-	 * Adjust customizer preview.
-	 */
-	function envo_extra_customizer_responsive_sizes() {
+/**
+ * Redirect after plugin activation
+ */
+function envo_extra_theme_redirect() {
+	if ( !is_network_admin() || !isset( $_GET[ 'activate-multi' ] ) ) {
+		wp_redirect( 'themes.php?page=envothemes-panel-install-demos' );
+	}
+}
+
+/**
+ * Adjust customizer preview.
+ */
+function envo_extra_customizer_responsive_sizes() {
 
 		$medium_breakpoint	 = 990;
 		$mobile_breakpoint	 = 480;

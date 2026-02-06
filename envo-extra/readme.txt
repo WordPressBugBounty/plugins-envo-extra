@@ -3,8 +3,8 @@ Contributors: EnvoThemes
 Author URI: https://envothemes.com/
 Plugin URL: https://envothemes.com/
 Requires at Least: 4.9
-Tested Up To: 6.8
-Stable tag: 1.9.11
+Tested Up To: 6.9
+Stable tag: 1.9.16
 Requires PHP: 5.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -30,6 +30,27 @@ Add one click demo import for [EnvoThemes](https://envothemes.com/) WooCommerce 
 This plugin will only function with the [Enwoo](https://enwoo-wp.com/) or [Envo Royal](https://envothemes.com/envo-royal-free-wp-theme/) theme and WooCommerce themes created by [EnvoThemes](https://envothemes.com/)
 
 == Changelog ==
+
+= 1.9.16 =
+* Updated code
+* Tested with WooCommerce 10.5
+* Tested with Elementor 3.5
+
+= 1.9.15 =
+* Fixed updating error
+
+= 1.9.14 =
+* Updated code
+* Improved customizer options styling
+
+= 1.9.13 =
+* Updated code
+
+= 1.9.12 =
+* Security update
+* Tested with WP 6.9
+* Tested with WooCommerce 10.4
+* Tested with Elementor 3.33
 
 = 1.9.11 =
 * Fixed mobile/tablet customizer options issue
