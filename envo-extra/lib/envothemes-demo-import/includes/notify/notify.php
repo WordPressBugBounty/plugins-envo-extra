@@ -374,10 +374,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 function envo_extra_admin_notice_promo() {
 
     // Unique notice ID
-    $notice_id = 'envo_extra_admin_notice_promo';
+    $notice_id = 'envo_sale_admin_notice_promo';
 	
 	// Set expiration time
-    $expire = strtotime('2026-3-31 23:59:59');
+    $expire = strtotime('2026-8-31 23:59:59');
 
     // Stop running after this date
     if ( time() > $expire ) {
@@ -409,10 +409,10 @@ function envo_extra_admin_notice_promo() {
     $dismiss_url = wp_nonce_url(
         add_query_arg(
             array(
-                'envo-extra-dismiss' => $notice_id,
+                'envo-sale-dismiss' => $notice_id,
             )
         ),
-        'envo_extra_dismiss_' . $notice_id
+        'envo_sale_dismiss_' . $notice_id
     );
     ?>
     <div class="notice notice-info is-dismissible envo-extra-notice" data-dismiss-url="<?php echo esc_url( $dismiss_url ); ?>">
@@ -444,16 +444,16 @@ add_action( 'admin_notices', 'envo_extra_admin_notice_promo' );
  */
 function envo_extra_handle_dismiss() {
 
-    if ( ! isset( $_GET['envo-extra-dismiss'] ) ) {
+    if ( ! isset( $_GET['envo-sale-dismiss'] ) ) {
         return;
     }
 
-    $notice_id = sanitize_key( $_GET['envo-extra-dismiss'] );
+    $notice_id = sanitize_key( $_GET['envo-sale-dismiss'] );
 
     // Verify nonce
     if (
         ! isset( $_GET['_wpnonce'] ) ||
-        ! wp_verify_nonce( $_GET['_wpnonce'], 'envo_extra_dismiss_' . $notice_id )
+        ! wp_verify_nonce( $_GET['_wpnonce'], 'envo_sale_dismiss_' . $notice_id )
     ) {
         return;
     }

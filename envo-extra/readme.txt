@@ -4,7 +4,7 @@ Author URI: https://envothemes.com/
 Plugin URL: https://envothemes.com/
 Requires at Least: 4.9
 Tested Up To: 6.9
-Stable tag: 1.9.19
+Stable tag: 1.9.20
 Requires PHP: 5.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
