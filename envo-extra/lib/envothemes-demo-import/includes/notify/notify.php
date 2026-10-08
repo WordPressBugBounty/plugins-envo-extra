@@ -377,31 +377,31 @@ function envo_extra_admin_notice_promo() {
     $notice_id = 'envo_sale_admin_notice_promo';
 	
 	// Set expiration time
-    $expire = strtotime('2026-8-31 23:59:59');
+//    $expire = strtotime('2026-8-31 23:59:59');
 
     // Stop running after this date
-    if ( time() > $expire ) {
-        return;
-    }
+//    if ( time() > $expire ) {
+//        return;
+//    }
 	
-	if(
-		(defined('ENVO_ROYAL_PRO_CURRENT_VERSION')) ||
-		(defined('ENTR_PRO_CURRENT_VERSION')) ||
-		(defined('ENVO_STOREFRONT_PRO_CURRENT_VERSION')) ||
-		(defined('ENVO_SHOP_PRO_CURRENT_VERSION')) ||
-		(defined('ENVO_ONLINE_STORE_PRO_CURRENT_VERSION')) ||
-		(defined('ENVO_SHOPPER_PRO_CURRENT_VERSION')) ||
-		(defined('ENVO_MARKETPLACE_PRO_CURRENT_VERSION')) ||
-		(defined('ENWOO_PRO_CURRENT_VERSION')) ||
-		(defined('ENVO_ECOMMERCE_PRO_CURRENT_VERSION')) ||
-		(defined('ENVO_MAGAZINE_PRO_CURRENT_VERSION'))
-	)	{return;}
+//	if(
+//		(defined('ENVO_ROYAL_PRO_CURRENT_VERSION')) ||
+//		(defined('ENTR_PRO_CURRENT_VERSION')) ||
+//		(defined('ENVO_STOREFRONT_PRO_CURRENT_VERSION')) ||
+//		(defined('ENVO_SHOP_PRO_CURRENT_VERSION')) ||
+//		(defined('ENVO_ONLINE_STORE_PRO_CURRENT_VERSION')) ||
+//		(defined('ENVO_SHOPPER_PRO_CURRENT_VERSION')) ||
+//		(defined('ENVO_MARKETPLACE_PRO_CURRENT_VERSION')) ||
+//		(defined('ENWOO_PRO_CURRENT_VERSION')) ||
+//		(defined('ENVO_ECOMMERCE_PRO_CURRENT_VERSION')) ||
+//		(defined('ENVO_MAGAZINE_PRO_CURRENT_VERSION'))
+//	)	{return;}
 
     // Get the dismissal timestamp
     $dismissed_timestamp = get_user_meta( get_current_user_id(), $notice_id, true );
 
     // Only hide if dismissed within the last 2 days (172800 seconds)
-    if ( $dismissed_timestamp && ( time() - intval( $dismissed_timestamp ) < 2 * DAY_IN_SECONDS ) ) {
+    if ( $dismissed_timestamp && ( time() - intval( $dismissed_timestamp ) < 14 * DAY_IN_SECONDS ) ) {
         return;
     }
 
@@ -416,12 +416,12 @@ function envo_extra_admin_notice_promo() {
     );
     ?>
     <div class="notice notice-info is-dismissible envo-extra-notice" data-dismiss-url="<?php echo esc_url( $dismiss_url ); ?>">
-        <p><span class="dashicons dashicons-tag" style="color:red"></span>
+        <p><span class="dashicons dashicons-admin-site" style="color:red"></span>
 			<?php 
 			echo sprintf(
-					esc_html__('Exclusive EnvoThemes SALE. %1$s Use discount coupon: %2$s', 'envothemes-demo-import'),
-					'<a href="https://envothemes.com/" target="_blank"><b>Upgrade Now and Save 20%.</b></a>',
-					'<b>Envo2026</b> <a href="https://envothemes.com/" target="_blank">Visit Site</a>')
+					esc_html__('%1$s Including free demo content. %2$s', 'envothemes-demo-import'),
+					'<a href="https://envothemes.com/" target="_blank"><b>Explore our other free WordPress themes.</b></a>',
+					'<a href="https://envothemes.com/" target="_blank">Visit Site</a>')
 			?>
 		</p>
     </div>

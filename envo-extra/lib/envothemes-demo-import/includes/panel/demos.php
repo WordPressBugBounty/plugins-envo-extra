@@ -708,6 +708,45 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 						),
 					),
 				);
+			} elseif ( 'Elastra' == $theme->name || 'elastra' == $theme->template ) {
+				$data = array(
+					$theme->template => array(
+						'demo_name'			 => $theme->name,
+						'categories'		 => array( 'WooCommerce', 'Gutenberg', 'Free', 'Business', 'Landing Page', 'FSE' ),
+						'xml_file'			 => $url . 'content.xml',
+						'theme_settings'	 => $url . 'customizer.dat',
+						'widgets_file'		 => $url . 'widgets.wie',
+						'screenshot'		 => $img_url . 'screenshot.webp',
+						'demo_link'			 => 'https://envothemes.com/elastra/',
+						//'home_title' => 'Lupr Homepage',
+						//'blog_title' => 'Blog',
+						//'posts_to_show' => '6',
+						//'elementor_width' => '1140',
+						'is_shop'			 => true,
+						'woo_image_size'	 => '600',
+						'woo_thumb_size'	 => '300',
+						'woo_crop_width'	 => '1',
+						'woo_crop_height'	 => '1',
+						'required_plugins'	 => array(
+							'free'			 => array(
+								array(
+									'slug'	 => 'envo-extra',
+									'init'	 => 'envo-extra/envo-extra.php',
+									'name'	 => 'Envo Extra',
+								),
+							),
+							'recommended'	 => array(
+								array(
+									'slug'	 => 'woocommerce',
+									'init'	 => 'woocommerce/woocommerce.php',
+									'name'	 => 'WooCommerce',
+									'notice' => '(Only for shop purposes.)',
+								),
+							),
+							'premium'		 => array(),
+						),
+					),
+				);	
 			} elseif ( 'Lancr' == $theme->name || 'lancr' == $theme->template ) {
 				$img_url	 = ENVO_URL . 'img/demos/' . $theme->template . '/';
 				$enwoo_url		 = $source . '/wp-content/uploads/demo-import/enwoo/';
