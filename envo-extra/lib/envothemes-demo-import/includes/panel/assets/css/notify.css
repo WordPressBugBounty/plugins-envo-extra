@@ -1,82 +1,229 @@
-/* review notice */
+/* Envo Blocks notice */
 
-.envo-review-notice{
-    padding: 50px 25px;
-    background-color: #fff;
-    border-radius: 3px;
-    margin: 20px 20px 0 0;
-    border-left: 4px solid transparent;
-}
-.envo-review-notice:after{
-    content: '';
-    display: table;
-    clear: both;
-}
-.envo-review-thumbnail{
-    float: left;
-    line-height: 85px;
-    text-align: center;
+.notice.envo-eb-notice {
     position: relative;
-    display: block;
-    width: 85px;
-    height: 85px;
-    background: #424242;
-    border-radius: 100%;
-    margin: auto 10px;
-}
-.envo-review-thumbnail img {
-    width: 55px;
-    vertical-align: middle;
-    opacity: .85;
-    transition: all .3s;
-}
-.envo-shop-notice .envo-review-thumbnail {
-    background: #f1f1f1;
-    width: 155px;
-    height: 155px;
-    margin-right: 45px;
-    margin-top: -30px;
-    margin-bottom: -30px;
-}
-.envo-shop-notice .envo-review-thumbnail img {
-    width: 196px;
-    opacity: 1;
-    margin-left: -20px;
-    margin-top: 7px;
-}
-.envo-review-thumbnail img:hover {
-    opacity: 1;
-}
-.envo-review-text{
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 20px 20px 10px 0;
+    padding: 0;
     overflow: hidden;
+    border: 0;
+    border-radius: 14px;
+    background: linear-gradient(120deg, #3b1fb0 0%, #5b2bd8 45%, #9b3bd1 100%);
+    box-shadow: 0 14px 34px rgba(76, 36, 196, .28);
+    color: #fff;
 }
-.envo-review-text h3{
-    font-size: 24px;
-    margin: 0 0 5px;
-    font-weight: 400;
-    line-height: 1.3;
+
+.envo-eb-content {
+    flex: 1 1 52%;
+    min-width: 0;
+    padding: 30px 34px;
 }
-.envo-review-text p{
-    font-size: 13px;
-    margin: 0 0 5px;
+
+.envo-eb-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .18);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: uppercase;
 }
-.envo-review-ul{
+
+.notice.envo-eb-notice h2 {
+    margin: 14px 0 8px;
+    padding: 0;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #fff;
+}
+
+.notice.envo-eb-notice p {
     margin: 0;
     padding: 0;
+    max-width: 560px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, .88);
 }
-.envo-review-ul li{
-    display: inline-block;
-    margin-right: 15px;
+
+.envo-eb-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
 }
-.envo-review-ul li a{
-    display: inline-block;
-    color: #10738B;
-    text-decoration: none;
-    padding-left: 26px;
-    position: relative;
+
+.envo-eb-features li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .14);
+    font-size: 13px;
 }
-.envo-review-ul li a span{
+
+.envo-eb-features .dashicons {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    color: #e3d4ff;
+}
+
+.envo-eb-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 18px;
+    margin-top: 22px;
+}
+
+.envo-eb-install {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 24px;
+    border: 0;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .18);
+    color: #4c22c4;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.envo-eb-install:hover,
+.envo-eb-install:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .24);
+}
+
+.envo-eb-install:focus-visible {
+    outline: 3px solid rgba(255, 255, 255, .6);
+    outline-offset: 2px;
+}
+
+.envo-eb-install[disabled] {
+    cursor: default;
+    opacity: .85;
+    transform: none;
+}
+
+.envo-eb-install.is-busy .dashicons:before {
+    content: '\f463';
+}
+
+.envo-eb-install.is-busy .dashicons {
+    animation: envo-eb-spin 1s infinite linear;
+}
+
+@keyframes envo-eb-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.notice.envo-eb-notice .envo-eb-more {
+    color: #fff;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.notice.envo-eb-notice .envo-eb-more:hover {
+    color: #e3d4ff;
+}
+
+.envo-eb-status {
+    font-size: 13px;
+}
+
+.envo-eb-status.is-error {
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: #fff;
+    color: #b32d2e;
+}
+
+.envo-eb-visual {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    width: 42%;
+    max-width: 520px;
+}
+
+/* Screenshots only, they fade into the background on the left */
+.envo-eb-visual img {
+    display: block;
+    width: 100%;
+    height: auto;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14%);
+    mask-image: linear-gradient(to right, transparent 0, #000 14%);
+}
+
+.envo-eb-dismiss {
     position: absolute;
-    left: 0;
-    top: -2px;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, .25);
+    color: #fff;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.envo-eb-dismiss:hover,
+.envo-eb-dismiss:focus-visible {
+    background: rgba(0, 0, 0, .45);
+}
+
+.rtl .envo-eb-dismiss {
+    right: auto;
+    left: 10px;
+}
+
+@media screen and (max-width: 1100px) {
+    .envo-eb-visual {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 782px) {
+    .notice.envo-eb-notice {
+        margin-right: 10px;
+    }
+
+    .envo-eb-content {
+        padding: 22px 20px;
+    }
+
+    .notice.envo-eb-notice h2 {
+        padding-right: 30px;
+        font-size: 21px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .envo-eb-install,
+    .envo-eb-install.is-busy .dashicons {
+        transition: none;
+        animation: none;
+    }
 }

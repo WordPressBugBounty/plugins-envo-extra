@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
 add_action('customize_register', 'envo_extra_theme_customize_register_woo', 15);
 
 function envo_extra_theme_customize_register_woo($wp_customize) {

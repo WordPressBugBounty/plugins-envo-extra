@@ -21,8 +21,8 @@ class Envo_Widget_Importer {
 		$data = Envo_Demos_Helpers::get_remote( $file );
 
 		// Return from this function if there was an error.
-		if ( is_wp_error( $data ) ) {
-			return $data;
+		if ( false === $data ) {
+			return new WP_Error( 'widget_import_error', __( 'Can not retrieve the widgets file.', 'envo-extra' ) );
 		}
 
 		// Decode file contents.
@@ -81,7 +81,7 @@ class Envo_Widget_Importer {
 				$sidebar_available    = false;
 				$use_sidebar_id       = 'wp_inactive_widgets'; // Add to inactive if sidebar does not exist in theme.
 				$sidebar_message_type = 'error';
-				$sidebar_message      = esc_html__( 'Sidebar does not exist in theme (moving widget to Inactive)', 'envothemes-demo-import' );
+				$sidebar_message      = esc_html__( 'Sidebar does not exist in theme (moving widget to Inactive)', 'envo-extra' );
 			}
 
 			// Result for sidebar.
@@ -103,7 +103,7 @@ class Envo_Widget_Importer {
 				if ( ! $fail && ! isset( $available_widgets[ $id_base ] ) ) {
 					$fail                = true;
 					$widget_message_type = 'error';
-					$widget_message      = esc_html__( 'Site does not support widget', 'envothemes-demo-import' ); // Explain why widget not imported.
+					$widget_message      = esc_html__( 'Site does not support widget', 'envo-extra' ); // Explain why widget not imported.
 				}
 
 				// Convert multidimensional objects to multidimensional arrays.
@@ -124,7 +124,7 @@ class Envo_Widget_Importer {
 						if ( in_array( "$id_base-$check_id", $sidebar_widgets ) && (array) $widget == $check_widget ) {
 							$fail                = true;
 							$widget_message_type = 'warning';
-							$widget_message      = esc_html__( 'Widget already exists', 'envothemes-demo-import' ); // Explain why widget not imported.
+							$widget_message      = esc_html__( 'Widget already exists', 'envo-extra' ); // Explain why widget not imported.
 
 							break;
 						}
@@ -182,17 +182,17 @@ class Envo_Widget_Importer {
 					// Success message.
 					if ( $sidebar_available ) {
 						$widget_message_type = 'success';
-						$widget_message      = esc_html__( 'Imported', 'envothemes-demo-import' );
+						$widget_message      = esc_html__( 'Imported', 'envo-extra' );
 					}
 					else {
 						$widget_message_type = 'warning';
-						$widget_message      = esc_html__( 'Imported to Inactive', 'envothemes-demo-import' );
+						$widget_message      = esc_html__( 'Imported to Inactive', 'envo-extra' );
 					}
 				}
 
 				// Result for widget instance.
 				$results[ $sidebar_id ]['widgets'][ $widget_instance_id ]['name']         = isset( $available_widgets[ $id_base ]['name'] ) ? $available_widgets[ $id_base ]['name'] : $id_base; // Widget name or ID if name not available (not supported by site).
-				$results[ $sidebar_id ]['widgets'][ $widget_instance_id ]['title']        = ! empty( $widget['title'] ) ? $widget['title'] : esc_html__( 'No Title', 'envothemes-demo-import' ); // Show "No Title" if widget instance is untitled.
+				$results[ $sidebar_id ]['widgets'][ $widget_instance_id ]['title']        = ! empty( $widget['title'] ) ? $widget['title'] : esc_html__( 'No Title', 'envo-extra' ); // Show "No Title" if widget instance is untitled.
 				$results[ $sidebar_id ]['widgets'][ $widget_instance_id ]['message_type'] = $widget_message_type;
 				$results[ $sidebar_id ]['widgets'][ $widget_instance_id ]['message']      = $widget_message;
 

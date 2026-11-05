@@ -76,8 +76,8 @@ class Checkbox_Switch extends Base {
 		$this->json['checkboxType'] = str_ireplace( 'kirki-', '', $this->type );
 
 		$this->json['defaultChoices'] = [
-			'on'  => __( 'On', 'kirki' ),
-			'off' => __( 'Off', 'kirki' ),
+			'on'  => __( 'On', 'envo-extra' ),
+			'off' => __( 'Off', 'envo-extra' ),
 		];
 
 	}

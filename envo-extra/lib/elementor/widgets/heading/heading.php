@@ -112,20 +112,20 @@ class Heading extends Widget_Base {
 
 		$settings = $this->get_settings_for_display();
 
-		$target   = $settings['title_link']['is_external'] ? ' target="_blank"' : '';
-		$nofollow = $settings['title_link']['nofollow'] ? ' rel="nofollow"' : '';
 
 		$title = $settings['title_before'] . ( ( ! empty( $settings['title_center'] ) ) ? ' <span class="envo-extra-title-focus">' . $settings['title_center'] . '</span>' : '' ) . ' ' . $settings['title_after'];
 
 		$html = '';
 
 		if ( ! empty( $settings['title_link']['url'] ) ) {
-			$html .= '<a href="' . esc_url( $settings['title_link']['url'] ) . '"' . esc_attr( $target ) . esc_attr( $nofollow ) . '>';
+			$html .= '<a' . envo_extra_link_attributes( $settings['title_link'] ) . '>';
 		}
 
-		$html .= '<' . esc_attr( $settings['title_tag'] ) . ' class="envo-extra-heading-title">';
+		$title_tag = \Elementor\Utils::validate_html_tag( $settings['title_tag'] );
+
+		$html .= '<' . $title_tag . ' class="envo-extra-heading-title">';
 		$html .= wp_kses_post( $title );
-		$html .= '</' . esc_attr( $settings['title_tag'] ) . '>';
+		$html .= '</' . $title_tag . '>';
 
 		if ( ! empty( $settings['title_link']['url'] ) ) {
 			$html .= '</a>';

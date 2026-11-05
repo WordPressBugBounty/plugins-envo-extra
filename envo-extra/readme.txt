@@ -2,10 +2,10 @@
 Contributors: EnvoThemes
 Author URI: https://envothemes.com/
 Plugin URL: https://envothemes.com/
-Requires at Least: 4.9
+Requires at Least: 5.3
 Tested Up To: 7.1
-Stable tag: 1.9.24
-Requires PHP: 5.6
+Stable tag: 1.9.25
+Requires PHP: 7.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Tags: elementor, woocommerce, demo, envothemes
@@ -30,6 +30,29 @@ Add one click demo import for [EnvoThemes](https://envothemes.com/) WooCommerce 
 This plugin will only function with the [Enwoo](https://enwoo-wp.com/) or [Envo Royal](https://envothemes.com/envo-royal-free-wp-theme/) theme and WooCommerce themes created by [EnvoThemes](https://envothemes.com/)
 
 == Changelog ==
+
+= 1.9.25 =
+* New: five block demos built with Envo Blocks for Enwoo, Envo Royal and Envo One (one shared demo site, links open the demo in the active theme)
+* Install Demos: new layout with Free/PRO and category filters, search, clearer import steps and progress
+* Demo import tries the other demo servers when a file is missing, the server switch was simplified
+* Install Demos: optional deletion of the existing content before the import (with a warning and confirmation)
+* Install Demos: list of imported demos with removal of the imported content and restore of the previous settings
+* Admin notices replaced by one notice for the free Envo Blocks plugin with a one-click installer
+* Fixed: demos for Envo One did not activate the theme after the import
+* Security: PRO demos are imported only with the PRO plugin and an active license (checked in every import step)
+* Plugin Check: escaped output, translator comments, direct file access protection, WordPress file functions, bundled Kirki strings use the envo-extra text domain, removed copies of core scripts and hidden files
+* Demo import: a menu of the site with the same name is kept apart (renamed back when the demo is removed), a demo without a logo removes the old logo
+* Security: hardened escaping and sanitization (metabox, footer credits, Elementor widgets, admin notices)
+* Security: nonces and capability checks for theme mod reset, dashboard actions and demo import
+* Security: custom codes keep raw HTML only for users with unfiltered_html capability
+* Security: safe import of customizer settings, demo server whitelist, XML uploads no longer allowed globally
+* Fixed: link target and rel attributes in Elementor widgets
+* Fixed: redirect after plugin and theme activation
+* Fixed: dashboard styles were not loaded
+* Theme credit link in the footer is now opt-in
+* Unified text domain to envo-extra
+* Block spacing and widths follow the theme: the old layout fallbacks load only for themes without theme.json
+* Removed unused plugin installer code
 
 = 1.9.24 =
 * Fixed missing demo image

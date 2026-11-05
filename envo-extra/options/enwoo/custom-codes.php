@@ -1,11 +1,25 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
 
 if (!class_exists('Kirki')) {
     return;
 }
 
-function envo_extra_do_not_filter_anything($value) {
-    return $value;
+/**
+ * Raw code is allowed only for users with unfiltered_html capability
+ * (not site admins on multisite). Others get the value filtered by wp_kses_post.
+ */
+if (!function_exists('envo_extra_do_not_filter_anything')) {
+
+    function envo_extra_do_not_filter_anything($value) {
+        if (current_user_can('unfiltered_html')) {
+            return $value;
+        }
+        return wp_kses_post($value);
+    }
+
 }
 
 Kirki::add_section('custom_code_section', array(
@@ -31,7 +45,7 @@ add_action('wp_head', 'envo_extra_add_googleanalytics', 10);
 function envo_extra_add_googleanalytics() {
     $header_code = get_theme_mod('header-code', '');
     if ($header_code) {
-        echo get_theme_mod('header-code', '');
+        echo $header_code; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- raw code saved by a user with unfiltered_html.
     }
 }
 
@@ -49,8 +63,8 @@ Kirki::add_field('envo_extra', array(
 add_action('wp_footer', 'envo_extra_add_footer_code');
 
 function envo_extra_add_footer_code() {
-    $header_code = get_theme_mod('footer-code', '');
-    if ($header_code) {
-        echo get_theme_mod('footer-code', '');
+    $footer_code = get_theme_mod('footer-code', '');
+    if ($footer_code) {
+        echo $footer_code; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- raw code saved by a user with unfiltered_html.
     }
 }

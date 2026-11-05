@@ -12,23 +12,49 @@ class Envo_Demos_Helpers {
      */
     public static function get_remote($url) {
 
-        // Get data
-        $response = wp_remote_get($url);
+        // Try the selected demo server first, then the other ones (not every server has all demos)
+        foreach (self::server_urls($url) as $server_url) {
 
-        // Check for errors
-        if (is_wp_error($response) or ( wp_remote_retrieve_response_code($response) != 200 )) {
-            return false;
+            // Get data, demo XML files have several MB
+            $response = wp_remote_get($server_url, array('timeout' => 60));
+
+            // Check for errors
+            if (is_wp_error($response) || 200 != wp_remote_retrieve_response_code($response)) {
+                continue;
+            }
+
+            // Get remote body val
+            $body = wp_remote_retrieve_body($response);
+
+            // Return data
+            if (!empty($body)) {
+                return $body;
+            }
         }
 
-        // Get remote body val
-        $body = wp_remote_retrieve_body($response);
+        return false;
+    }
 
-        // Return data
-        if (!empty($body)) {
-            return $body;
-        } else {
-            return false;
+    /**
+     * The given URL followed by the same file on the other demo servers.
+     *
+     * @since 1.9.25
+     */
+    public static function server_urls($url) {
+        $urls = array($url);
+        $servers = class_exists('envo_Install_Demos') ? envo_Install_Demos::SERVERS : array('https://envo-demos.com', 'https://enwoo-wp.com', 'https://envothemes.com');
+        foreach ($servers as $server) {
+            if (0 === strpos($url, $server . '/')) {
+                $path = substr($url, strlen($server));
+                foreach ($servers as $other) {
+                    if ($other !== $server) {
+                        $urls[] = $other . $path;
+                    }
+                }
+                break;
+            }
         }
+        return $urls;
     }
 
     /**
@@ -68,16 +94,12 @@ class Envo_Demos_Helpers {
 
         $args = wp_parse_args($args, array(
             'timeout' => 30,
-            'user-agent' => 'avada-user-agent',
+            'user-agent' => 'EnvoThemes Demo Import; ' . home_url(),
         ));
-        $response = wp_remote_get(esc_url_raw($url), $args);
+        $response = wp_safe_remote_get(esc_url_raw($url), $args);
         $body = wp_remote_retrieve_body($response);
-
-        // Try file_get_contents if body is empty.
         if (empty($body)) {
-            if (function_exists('ini_get') && ini_get('allow_url_fopen')) {
-                $body = @file_get_contents($url);
-            }
+            return false;
         }
 
         // Initialize the WordPress filesystem.
@@ -89,14 +111,8 @@ class Envo_Demos_Helpers {
 
         // Attempt to write the file.
         if (!$wp_filesystem->put_contents($file_path, $body, FS_CHMOD_FILE)) {
-            // If the attempt to write to the file failed, then fallback to fwrite.
-            @unlink($file_path);
-            $fp = fopen($file_path, 'w');
-            $written = fwrite($fp, $body);
-            fclose($fp);
-            if (false === $written) {
-                return false;
-            }
+            wp_delete_file($file_path);
+            return false;
         }
 
         // If all went well, then return the headers of the request.

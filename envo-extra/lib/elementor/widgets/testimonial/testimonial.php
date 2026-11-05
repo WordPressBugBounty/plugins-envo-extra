@@ -237,7 +237,7 @@ class Testimonial extends Widget_Base {
 
 		$this->add_control(
 		'quote_icon', array(
-			'label'		 => esc_html__( 'Icons', 'envo-extra-pro' ),
+			'label'		 => esc_html__( 'Icons', 'envo-extra' ),
 			'type'		 => \Elementor\Controls_Manager::ICONS,
 			'default'	 => array(
 				'value'		 => 'fas fa-quote-left',
@@ -894,15 +894,13 @@ class Testimonial extends Widget_Base {
 		$settings = $this->get_settings_for_display();
 
 		$title_tag	 = ( $settings[ 'name_link' ][ 'url' ] ) ? 'a' : 'h3';
-		$title_attr	 = $settings[ 'name_link' ][ 'is_external' ] ? ' target="_blank"' : '';
-		$title_attr .= $settings[ 'name_link' ][ 'nofollow' ] ? ' rel="nofollow"' : '';
-		$title_attr .= $settings[ 'name_link' ][ 'url' ] ? ' href="' . esc_url($settings[ 'name_link' ][ 'url' ]) . '"' : '';
+		$title_attr = envo_extra_link_attributes( $settings[ 'name_link' ] );
 		?>
 
 		<?php if ( '4' === $settings[ 'layout' ] || '5' === $settings[ 'layout' ] || '10' === $settings[ 'layout' ] ) { ?>
 			<?php if ( $settings[ 'image' ][ 'id' ] || $settings[ 'image' ][ 'url' ] ) : ?>
 				<div class="envo-extra-testimonial-image">
-					<?php echo (!empty( $settings[ 'image' ][ 'id' ] ) ) ? wp_get_attachment_image( $settings[ 'image' ][ 'id' ], $settings[ 'thumbnail_size' ] ) : '<img src="' . esc_url( $settings[ 'image' ][ 'url' ] ) . '">'; ?>
+					<?php echo (!empty( $settings[ 'image' ][ 'id' ] ) ) ? wp_get_attachment_image( $settings[ 'image' ][ 'id' ], $settings[ 'thumbnail_size' ] ) : '<img src="' . esc_url( $settings[ 'image' ][ 'url' ] ) . '" alt="' . esc_attr( $settings[ 'name' ] ) . '">'; ?>
 				</div>
 			<?php endif; ?>
 		<?php } ?>
@@ -964,14 +962,14 @@ class Testimonial extends Widget_Base {
 			<?php if ( '4' !== $settings[ 'layout' ] && '5' !== $settings[ 'layout' ] && '10' !== $settings[ 'layout' ] ) { ?>
 				<?php if ( $settings[ 'image' ][ 'id' ] || $settings[ 'image' ][ 'url' ] ) : ?>
 					<div class="envo-extra-testimonial-image">
-						<?php echo (!empty( $settings[ 'image' ][ 'id' ] ) ) ? wp_get_attachment_image( $settings[ 'image' ][ 'id' ], $settings[ 'thumbnail_size' ] ) : '<img src="' . esc_url( $settings[ 'image' ][ 'url' ] ) . '">'; ?>
+						<?php echo (!empty( $settings[ 'image' ][ 'id' ] ) ) ? wp_get_attachment_image( $settings[ 'image' ][ 'id' ], $settings[ 'thumbnail_size' ] ) : '<img src="' . esc_url( $settings[ 'image' ][ 'url' ] ) . '" alt="' . esc_attr( $settings[ 'name' ] ) . '">'; ?>
 					</div>
 				<?php endif; ?>
 			<?php } ?>
 			<?php if ( $settings[ 'name' ] || $settings[ 'designation' ] ) { ?>
 				<div class="envo-extra-testimonial-author-bio">
 					<?php if ( $settings[ 'name' ] ) : ?>
-						<<?php echo esc_attr( $title_tag ); ?><?php echo wp_kses_data( $title_attr ); ?> class="envo-extra-testimonial-title"><?php echo esc_attr( $settings[ 'name' ] ); ?></<?php echo esc_attr( $title_tag ); ?>>
+						<<?php echo esc_attr( $title_tag ); ?><?php echo wp_kses_data( $title_attr ); ?> class="envo-extra-testimonial-title"><?php echo esc_html( $settings[ 'name' ] ); ?></<?php echo esc_attr( $title_tag ); ?>>
 					<?php endif; ?>
 					<?php if ( $settings[ 'designation' ] ) : ?>
 						<h4 class="envo-extra-testimonial-designation"><?php echo esc_attr( $settings[ 'designation' ] ); ?></h4>

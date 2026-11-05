@@ -906,9 +906,7 @@ class Icon_Box extends Widget_Base {
 
 
 		$html_tag	 = ( $settings[ 'link' ] ) ? 'a' : 'div';
-		$attr		 = $settings[ 'link' ][ 'url' ] ? ' href="' . esc_url($settings[ 'link' ][ 'url' ]) . '"' : '';
-		$attr .= $settings[ 'link' ][ 'is_external' ] ? ' target="_blank"' : '';
-		$attr .= $settings[ 'link' ][ 'nofollow' ] ? ' rel="nofollow"' : '';
+		$attr = envo_extra_link_attributes( $settings[ 'link' ] );
 		$allowed_tags = [ 'h1','h2','h3','h4','h5','h6','div','span','p' ];
 		$title_tag = in_array( $settings['title_tag'], $allowed_tags, true ) ? $settings['title_tag'] : 'h3';
 		?>
@@ -935,7 +933,7 @@ class Icon_Box extends Widget_Base {
 			<span class="envo-extra-box-icon-content">
 				<?php
 				if ( $settings[ 'title' ] ) :
-					printf( '<%1$s %2$s>%3$s</%1$s>', tag_escape( $title_tag ), $this->get_render_attribute_string( 'title' ), $settings[ 'title' ] ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					printf( '<%1$s %2$s>%3$s</%1$s>', tag_escape( $title_tag ), $this->get_render_attribute_string( 'title' ), wp_kses_post( $settings[ 'title' ] ) ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				endif;
 				?>
 

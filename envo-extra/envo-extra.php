@@ -3,7 +3,9 @@
  * Plugin Name: Envo Extra
  * Plugin URI: https://envothemes.com/
  * Description: Extra addon for EnvoThemes Themes
- * Version: 1.9.24
+ * Version: 1.9.25
+ * Requires at least: 5.3
+ * Requires PHP: 7.0
  * Author: EnvoThemes
  * Author URI: https://envothemes.com/
  * License: GPL-2.0+
@@ -31,12 +33,6 @@ define( 'ENVO_EXTRA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'ENVO_EXTRA_PLUGIN_BASE', plugin_basename( __FILE__ ) );
 define( 'ENVO_EXTRA_PLUGIN_URL', plugins_url( '/', __FILE__ ) );
 
-add_action( 'init', 'envo_extra_load_textdomain' );
-
-function envo_extra_load_textdomain() {
-	load_plugin_textdomain( 'envo-extra', false, basename( dirname( __FILE__ ) ) . '/languages/' );
-}
-
 function envo_extra_is_gutenberg() {
 
 	if ( function_exists( 'has_blocks' ) && has_blocks( get_the_ID() ) ) {
@@ -49,6 +45,10 @@ function envo_extra_is_gutenberg() {
 function envo_extra_scripts() {
 	if ( envo_extra_is_gutenberg() ) {
 		wp_enqueue_style( 'envo-extra-gutenberg', plugin_dir_url( __FILE__ ) . 'css/gutenberg.css', array(), ENVO_EXTRA_CURRENT_VERSION );
+		// Layout fallbacks for classic themes without theme.json (themes with it lay out the blocks themselves).
+		if ( ! function_exists( 'wp_theme_has_theme_json' ) || ! wp_theme_has_theme_json() ) {
+			wp_enqueue_style( 'envo-extra-gutenberg-classic', plugin_dir_url( __FILE__ ) . 'css/gutenberg-classic.css', array( 'envo-extra-gutenberg' ), ENVO_EXTRA_CURRENT_VERSION );
+		}
 	}
 	wp_enqueue_style( 'envo-extra', plugin_dir_url( __FILE__ ) . 'css/style.css', array(), ENVO_EXTRA_CURRENT_VERSION );
 	wp_enqueue_script( 'envo-extra-js', plugin_dir_url( __FILE__ ) . 'js/envo.js', array( 'jquery' ), ENVO_EXTRA_CURRENT_VERSION, true );
@@ -56,9 +56,6 @@ function envo_extra_scripts() {
 
 add_action( 'wp_enqueue_scripts', 'envo_extra_scripts' );
 
-function envo_extra_admin_scripts() {
-    wp_enqueue_script( 'preview-script-elmn', ENVO_EXTRA_PLUGIN_URL . 'lib/elementor/assets/js/elementor.js', [ ], ENVO_EXTRA_CURRENT_VERSION, true );
-}
 //Dequeue Styles
 function envo_extra_dequeue_unnecessary_styles() {
 	$value = get_theme_mod( 'main_typographydesktop', array() );
@@ -86,7 +83,7 @@ if ( !function_exists( 'envo_extra_text' ) ) {
 
 	function envo_extra_text( $rewritetexts ) {
 
-		$currentyear = date( 'Y' );
+		$currentyear = wp_date( 'Y' );
 		$copy		 = '&copy;';
 
 		return str_replace(
@@ -105,7 +102,7 @@ function envo_extra_back_to_top() {
 	if ( get_theme_mod( 'back_to_top_on_off', 'block' ) == 'block' ) {
 		?>
 		<!-- Return to Top -->
-		<a href="javascript:" id="return-to-top"><i class="las la-chevron-up"></i></a>
+		<a href="#" id="return-to-top" aria-label="<?php esc_attr_e( 'Back to top', 'envo-extra' ); ?>"><i class="las la-chevron-up" aria-hidden="true"></i></a>
 		<?php
 	}
 }
@@ -125,30 +122,30 @@ function envo_extra_action() {
  */
 function envo_extra_generate_construct_footer() {
 	if ( get_theme_mod( 'enwoo_custom_footer_on_off', '' ) == 'elementor' && get_theme_mod( 'enwoo_custom_footer', '' ) != '' && envo_extra_check_for_elementor() ) {
-		$elementor_section_ID = get_theme_mod( 'enwoo_custom_footer', '' );
+		$elementor_section_ID = absint( get_theme_mod( 'enwoo_custom_footer', '' ) );
 		?>
 		<footer id="colophon" class="elementor-footer-credits">
-			<?php echo do_shortcode( '[elementor-template id="' . $elementor_section_ID . '"]' ); ?>	
+			<?php echo do_shortcode( '[elementor-template id="' . $elementor_section_ID . '"]' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 		</footer>
 	<?php } elseif ( get_theme_mod( 'footer-credits', '' ) != '' ) { ?>
 		<footer id="colophon" class="footer-credits container-fluid">
 			<div class="container">
 				<div class="footer-credits-text text-center">
 					<div class="envo-credits-text">
-						<?php echo apply_filters( 'envo_extra_footer_text', get_theme_mod( 'footer-credits', '' ) ); ?>
-					</div>    
-					<?php if ( get_theme_mod( 'enwoo_footer_credits_on_off', 1 ) == 1 ) { ?>
-						<?php printf( get_site_option( 'et_fc' ) ); ?>
+						<?php echo wp_kses_post( apply_filters( 'envo_extra_footer_text', get_theme_mod( 'footer-credits', '' ) ) ); ?>
+					</div>
+					<?php if ( envo_extra_footer_credits_enabled() ) { ?>
+						<?php echo wp_kses_post( get_site_option( 'et_fc' ) ); ?>
 					<?php } ?>
 				</div>
 			</div>	
 		</footer>   
 	<?php } else { ?>
-		<?php if ( get_theme_mod( 'enwoo_footer_credits_on_off', 1 ) == 1 ) { ?>
+		<?php if ( envo_extra_footer_credits_enabled() ) { ?>
 			<footer id="colophon" class="footer-credits container-fluid">
 				<div class="container">
 					<div class="footer-credits-text text-center">
-						<?php printf( get_site_option( 'et_fc' ) ); ?>
+						<?php echo wp_kses_post( get_site_option( 'et_fc' ) ); ?>
 					</div>
 				</div>	
 			</footer>
@@ -157,19 +154,27 @@ function envo_extra_generate_construct_footer() {
 	}
 }
 
+/**
+ * Theme credit link in the footer is opt-in in the free version.
+ * PRO plugins keep their own toggle (enabled by default).
+ */
+function envo_extra_footer_credits_enabled() {
+	$default = ( envo_extra_check_for_pro( 'enwoo' ) || envo_extra_check_for_pro( 'envo-royal' ) ) ? 1 : 0;
+	return 1 == get_theme_mod( 'enwoo_footer_credits_on_off', $default );
+}
+
 function envo_extra_recommended_plugins() {
 	add_theme_support( 'recommend-plugins', array(
 		'woocommerce'	 => array(
 			'name'				 => 'WooCommerce',
 			'active_filename'	 => 'woocommerce/woocommerce.php',
 			/* translators: %s plugin name string */
-			'description'		 => sprintf( esc_attr__( 'To enable shop features, please install and activate the %s plugin.', 'envo-extra' ), '<strong>WooCommerce</strong>' ),
+			'description'		 => sprintf( esc_html__( 'To enable shop features, please install and activate the %s plugin.', 'envo-extra' ), '<strong>WooCommerce</strong>' ),
 		),
 		'elementor'		 => array(
 			'name'				 => 'Elementor',
 			'active_filename'	 => 'elementor/elementor.php',
-			/* translators: %s plugin name string */
-			'description'		 => sprintf( esc_attr__( 'The most advanced frontend drag & drop page builder.', 'envo-extra' ), '<strong>Elementor</strong>' ),
+			'description'		 => esc_html__( 'The most advanced frontend drag & drop page builder.', 'envo-extra' ),
 		),
 	) );
 }
@@ -249,100 +254,54 @@ function envo_extra_functions() {
 }
 add_action( 'after_setup_theme', 'envo_extra_functions' );
 
-$theme = wp_get_theme();
-if ( 'Enwoo' == $theme->name || 'enwoo' == $theme->template ) {
+/**
+ * Return slug of the supported active theme (enwoo, envo-royal) or empty string.
+ */
+function envo_extra_supported_theme() {
+	$theme = wp_get_theme();
+	if ( 'Enwoo' == $theme->name || 'enwoo' == $theme->template ) {
+		return 'enwoo';
+	}
+	if ( 'Envo Royal' == $theme->name || 'envo-royal' == $theme->template ) {
+		return 'envo-royal';
+	}
+	return '';
+}
+
+if ( envo_extra_supported_theme() ) {
 
 	add_action( 'customize_register', 'envo_extra_custom_customizer_control' );
 
 	function envo_extra_check_for_woocommerce() {
-		require_once( plugin_dir_path( __FILE__ ) . 'lib/admin/metabox.php' );
-		if ( !envo_extra_check_for_pro( 'enwoo' ) ) {
+		$slug	 = envo_extra_supported_theme();
+		$path	 = plugin_dir_path( __FILE__ );
+
+		require_once( $path . 'lib/admin/metabox.php' );
+		if ( !envo_extra_check_for_pro( $slug ) ) {
 			Kirki::add_section( 'pro', array(
-				'title'			 => esc_html__( 'Unlock More Options', 'kirki' ),
+				'title'			 => esc_html__( 'Unlock More Options', 'envo-extra' ),
 				'type'			 => 'link',
-				'button_text'	 => esc_html__( 'Enwoo PRO', 'envo-extra' ),
-				'button_url'	 => 'https://enwoo-wp.com/enwoo-pro/',
+				'button_text'	 => 'enwoo' === $slug ? esc_html__( 'Enwoo PRO', 'envo-extra' ) : esc_html__( 'Envo Royal PRO', 'envo-extra' ),
+				'button_url'	 => 'enwoo' === $slug ? 'https://enwoo-wp.com/enwoo-pro/' : 'https://envothemes.com/product/envo-royal-pro/',
 				'priority'		 => 1,
 			) );
-			require_once( plugin_dir_path( __FILE__ ) . 'options/enwoo/pro.php' );
-			require_once( plugin_dir_path( __FILE__ ) . 'lib/envothemes-demo-import/includes/panel/pro-demos.php' );
+			require_once( $path . 'options/' . $slug . '/pro.php' );
+			require_once( $path . 'lib/envothemes-demo-import/includes/panel/' . ( 'enwoo' === $slug ? 'pro-demos.php' : 'envo-royal-pro-demos.php' ) );
 		}
 
 		Kirki::add_panel( 'envo_theme_panel', array(
 			'title'		 => esc_attr__( 'Theme Options', 'envo-extra' ),
 			'priority'	 => 5,
 		) );
-		require_once( plugin_dir_path( __FILE__ ) . 'options/enwoo/site-width.php' );
-		require_once( plugin_dir_path( __FILE__ ) . 'options/enwoo/top-bar.php' );
-		require_once( plugin_dir_path( __FILE__ ) . 'options/enwoo/header.php' );
-		require_once( plugin_dir_path( __FILE__ ) . 'options/enwoo/main-menu.php' );
-		require_once( plugin_dir_path( __FILE__ ) . 'options/enwoo/footer-credits.php' );
-		require_once( plugin_dir_path( __FILE__ ) . 'options/enwoo/footer-widgets.php' );
-		require_once( plugin_dir_path( __FILE__ ) . 'options/enwoo/main-colors.php' );
-		require_once( plugin_dir_path( __FILE__ ) . 'options/enwoo/posts-pages.php' );
-		require_once( plugin_dir_path( __FILE__ ) . 'options/enwoo/sidebar.php' );
-		require_once( plugin_dir_path( __FILE__ ) . 'options/enwoo/back-to-top.php' );
-		require_once( plugin_dir_path( __FILE__ ) . 'options/enwoo/custom-codes.php' );
-		if ( !defined( 'WC_VERSION' ) ) {
-			// no woocommerce :(
-		} else {
-			require_once( plugin_dir_path( __FILE__ ) . 'options/enwoo/woocommerce.php' );
-			require_once( plugin_dir_path( __FILE__ ) . 'lib/woocommerce.php' );
+
+		$options = array( 'top-bar', 'header', 'main-menu', 'footer-credits', 'footer-widgets', 'main-colors', 'posts-pages', 'sidebar', 'back-to-top', 'custom-codes' );
+		array_unshift( $options, 'enwoo' === $slug ? 'site-width' : 'color-preset' );
+		foreach ( $options as $option ) {
+			require_once( $path . 'options/' . $slug . '/' . $option . '.php' );
 		}
-	}
-
-	add_action( 'after_setup_theme', 'envo_extra_check_for_woocommerce' );
-
-
-	add_action( 'init', 'envo_extra_dashboard' );
-	add_action( 'init', 'envo_extra_recommended_plugins' );
-
-	add_filter( 'use_widgets_block_editor', '__return_false' );
-
-	add_action( 'after_setup_theme', 'envo_extra_action', 0 );
-}
-
-if ( 'Envo Royal' == $theme->name || 'envo-royal' == $theme->template ) {
-
-	add_action( 'customize_register', 'envo_extra_custom_customizer_control' );
-
-	function envo_extra_check_for_woocommerce() {
-  
-      require_once( plugin_dir_path( __FILE__ ) . 'lib/admin/metabox.php' );
-    	if ( !envo_extra_check_for_pro( 'envo-royal' ) ) {
-    		Kirki::add_section( 'pro', array(
-    			'title'			 => esc_html__( 'Unlock More Options', 'kirki' ),
-    			'type'			 => 'link',
-    			'button_text'	 => esc_html__( 'Envo Royal PRO', 'envo-extra' ),
-    			'button_url'	 => 'https://envothemes.com/product/envo-royal-pro/',
-    			'priority'		 => 1,
-    		) );
-    		require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/pro.php' );
-    		require_once( plugin_dir_path( __FILE__ ) . 'lib/envothemes-demo-import/includes/panel/envo-royal-pro-demos.php' );
-    	}
-
-    	Kirki::add_panel( 'envo_theme_panel', array(
-    		'title'		 => esc_attr__( 'Theme Options', 'envo-extra' ),
-    		'priority'	 => 5,
-    	) );
-  
-  
-    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/color-preset.php' );
-    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/top-bar.php' );
-    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/header.php' );
-    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/main-menu.php' );
-    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/footer-credits.php' );
-    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/footer-widgets.php' );
-    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/main-colors.php' );
-    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/posts-pages.php' );
-    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/sidebar.php' );
-    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/back-to-top.php' );
-    	require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/custom-codes.php' );
-		if ( !defined( 'WC_VERSION' ) ) {
-			// no woocommerce :(
-		} else {
-			require_once( plugin_dir_path( __FILE__ ) . 'options/envo-royal/woocommerce.php' );
-			require_once( plugin_dir_path( __FILE__ ) . 'lib/woocommerce.php' );
+		if ( defined( 'WC_VERSION' ) ) {
+			require_once( $path . 'options/' . $slug . '/woocommerce.php' );
+			require_once( $path . 'lib/woocommerce.php' );
 		}
 	}
 
@@ -357,9 +316,13 @@ if ( 'Envo Royal' == $theme->name || 'envo-royal' == $theme->template ) {
 }
 
 // Deactivate 3rd party plugin
-if ( in_array( 'envothemes-demo-import/envothemes-demo-import.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
-	deactivate_plugins( 'envothemes-demo-import/envothemes-demo-import.php' );
+function envo_extra_deactivate_demo_import() {
+	if ( is_plugin_active( 'envothemes-demo-import/envothemes-demo-import.php' ) && current_user_can( 'activate_plugins' ) ) {
+		deactivate_plugins( 'envothemes-demo-import/envothemes-demo-import.php' );
+	}
 }
+
+add_action( 'admin_init', 'envo_extra_deactivate_demo_import' );
 
 add_action( 'plugins_loaded', 'envo_extra_plugin_load' );
 
@@ -440,7 +403,8 @@ if ( !function_exists( 'envo_extra_widget_date_comments' ) ) :
 				esc_html_e( 'Off', 'envo-extra' );
 			} else {
 				?>
-				<a href="<?php echo esc_url( get_comments_link() ); ?>" rel="nofollow" title="<?php esc_html_e( 'Comment on ', 'envo-extra' ) . the_title_attribute(); ?>">
+				<?php /* translators: %s: post title */ ?>
+				<a href="<?php echo esc_url( get_comments_link() ); ?>" rel="nofollow" title="<?php echo esc_attr( sprintf( __( 'Comment on %s', 'envo-extra' ), get_the_title() ) ); ?>">
 				<?php echo absint( get_comments_number() ); ?>
 				</a>
 				<?php } ?>
@@ -473,7 +437,6 @@ function envo_extra_check_for_elementor_pro() {
 if ( envo_extra_check_for_elementor() ) {
 	if ( !envo_extra_check_for_elementor_pro() ) {
 		include_once( plugin_dir_path( __FILE__ ) . 'lib/elementor/shortcode.php' );
-		add_action( 'admin_enqueue_scripts', 'envo_extra_admin_scripts' );
 	}
 }
 
@@ -481,14 +444,14 @@ include_once( plugin_dir_path( __FILE__ ) . 'lib/elementor/widgets.php' );
 
 function envo_extra_activate_fc() {
 	$arr	 = array( '' );
-	$theme	 = wp_get_theme();
-	if ( 'Enwoo' == $theme->name || 'enwoo' == $theme->template ) {
+	$slug	 = envo_extra_supported_theme();
+	if ( 'enwoo' === $slug ) {
 		$arr = array(
 			'Created with <a href="https://enwoo-wp.com/free-woocommerce-theme/" title="Free WooCommerce WordPress Theme">Enwoo</a> WordPress theme',
 			'Created with <a href="https://enwoo-wp.com/free-business-wp-theme/" title="Free Business WordPress Theme">Enwoo</a> WordPress theme',
 			'Created with <a href="https://enwoo-wp.com/" title="Free Multipurpose WordPress Theme">Enwoo</a> WordPress theme',
 		);
-	} elseif ( 'Envo Royal' == $theme->name || 'envo-royal' == $theme->template ) {
+	} elseif ( 'envo-royal' === $slug ) {
 		$arr = array(
 			'Created with <a href="https://envothemes.com/envo-royal-free-wp-theme/" title="Free Multipurpose WordPress Theme">Envo Royal</a> WordPress theme',
 		);
@@ -516,10 +479,7 @@ function envo_extra_plugin_activate() {
  * Check PRO plugin
  */
 function envo_extra_check_for_pro( $plugin ) {
-	if ( in_array( $plugin . '-pro/' . $plugin . '-pro.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
-		return true;
-	}
-	return;
+	return is_plugin_active( $plugin . '-pro/' . $plugin . '-pro.php' );
 }
 
 /**
@@ -528,18 +488,26 @@ function envo_extra_check_for_pro( $plugin ) {
 function envo_extra_plugin_redirect() {
 	if ( get_option( 'envo_plugin_do_activation_redirect', false ) ) {
 		delete_option( 'envo_plugin_do_activation_redirect' );
-		if ( !is_network_admin() || !isset( $_GET[ 'activate-multi' ] ) ) {
-			wp_redirect( 'themes.php?page=envothemes-panel-install-demos' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( !is_network_admin() && !isset( $_GET[ 'activate-multi' ] ) && !wp_doing_ajax() && current_user_can( 'manage_options' ) ) {
+			wp_safe_redirect( admin_url( 'themes.php?page=envothemes-panel-install-demos' ) );
+			exit;
 		}
 	}
 }
 
 /**
- * Redirect after plugin activation
+ * Redirect after theme activation
  */
 function envo_extra_theme_redirect() {
-	if ( !is_network_admin() || !isset( $_GET[ 'activate-multi' ] ) ) {
-		wp_redirect( 'themes.php?page=envothemes-panel-install-demos' );
+	// Only themes with demos to import
+	if ( !class_exists( 'EnvoThemes_Demos' ) || !EnvoThemes_Demos::get_demos_data() ) {
+		return;
+	}
+	// Not during AJAX (e.g. the demo import switches the theme and continues with further requests)
+	if ( !is_network_admin() && !wp_doing_ajax() && !wp_doing_cron() && current_user_can( 'manage_options' ) ) {
+		wp_safe_redirect( admin_url( 'themes.php?page=envothemes-panel-install-demos' ) );
+		exit;
 	}
 }
 
@@ -588,21 +556,24 @@ add_action( 'customize_controls_print_styles', 'envo_extra_customizer_scripts_st
 
 add_filter( 'body_class', 'envo_extra_body_classes' );
 
+/**
+ * Current header layout (busnav/woonav).
+ */
+function envo_extra_header_layout() {
+	if ( 'enwoo' === envo_extra_supported_theme() ) {
+		return get_theme_mod( 'header_layout', envo_extra_check_plugin_active( 'woocommerce/woocommerce.php' ) ? 'woonav' : 'busnav' );
+	}
+	return get_theme_mod( 'header_layout', 'busnav' );
+}
+
 function envo_extra_body_classes( $classes ) {
 
-	$theme = wp_get_theme();
-	if ( 'Enwoo' == $theme->name || 'enwoo' == $theme->template ) {
-		$header = get_theme_mod( 'header_layout', envo_extra_check_plugin_active( 'woocommerce/woocommerce.php' ) ? 'woonav' : 'busnav'  );
-	} else {
-		$header = get_theme_mod( 'header_layout', 'busnav' );
-	}
+	$header = envo_extra_header_layout();
 	if ( $header != '' ) {
-		$classes[] = 'header-' . $header;
-	}
-
-	$woo_check = envo_extra_check_plugin_active( 'woocommerce/woocommerce.php' ) ? 'woo-on' : '';
-	if ( $header != '' ) {
-		$classes[] = $woo_check;
+		$classes[] = 'header-' . sanitize_html_class( $header );
+		if ( envo_extra_check_plugin_active( 'woocommerce/woocommerce.php' ) ) {
+			$classes[] = 'woo-on';
+		}
 	}
 
 	if ( is_archive() || is_home() )
@@ -619,7 +590,7 @@ function envo_extra_body_classes( $classes ) {
 	if ( $sidebar == 'on' ) {
 		$classes[] = 'sidebar-off';
 	}
-	$transparent_header = get_post_meta( get_the_ID(), 'envo_extra_transparent_header', true ) !== '' ? get_post_meta( get_the_ID(), 'envo_extra_transparent_header', true ) : '';
+	$transparent_header = get_post_meta( get_the_ID(), 'envo_extra_transparent_header', true );
 	if ( $transparent_header == 'on' ) {
 		$classes[] = 'transparent-header';
 	}
@@ -632,17 +603,16 @@ function envo_extra_body_classes( $classes ) {
  */
 function envo_extra_enqueue_header_css() {
 
+	if ( !is_singular() ) {
+		return;
+	}
+
 	$css = '';
 
 	$transparent_header			 = get_post_meta( get_the_ID(), 'envo_extra_transparent_header', true );
-	$transparent_header_color	 = get_post_meta( get_the_ID(), 'envo_extra_header_text_color', true );
-	$theme						 = wp_get_theme();
-	if ( 'Enwoo' == $theme->name || 'enwoo' == $theme->template ) {
-		$header = get_theme_mod( 'header_layout', envo_extra_check_plugin_active( 'woocommerce/woocommerce.php' ) ? 'woonav' : 'busnav'  );
-	} else {
-		$header = get_theme_mod( 'header_layout', 'busnav' );
-	}
-	if ( $transparent_header == 'on' ) {
+	$transparent_header_color	 = sanitize_hex_color( get_post_meta( get_the_ID(), 'envo_extra_header_text_color', true ) );
+	$header						 = envo_extra_header_layout();
+	if ( $transparent_header == 'on' && $transparent_header_color ) {
 		if ( $header == 'busnav' ) {
 			$css .= '.transparent-header .site-header.business-heading:not(.shrink), .transparent-header .site-header.business-heading:not(.shrink) .navbar-default .navbar-nav > li > a, .transparent-header .site-header.business-heading:not(.shrink) a.cart-contents i, .transparent-header .site-header.business-heading:not(.shrink) .header-my-account a, .transparent-header .site-header.business-heading:not(.shrink) .header-wishlist a, .transparent-header .site-header.business-heading:not(.shrink) .header-compare a, .transparent-header .site-header.business-heading:not(.shrink) .header-search a, .transparent-header .site-header.business-heading:not(.shrink) .site-branding-text h1.site-title a, .transparent-header .site-header.business-heading:not(.shrink) .site-branding-text .site-title a, .transparent-header .site-header.business-heading:not(.shrink) #site-navigation .navbar-nav > li > a, .transparent-header .site-header.business-heading:not(.shrink) p.site-description {color: ' . $transparent_header_color . ';}';
 			$css .= '.transparent-header .site-header.business-heading:not(.shrink) .hc-nav-trigger span,.transparent-header .site-header.business-heading:not(.shrink) .hc-nav-trigger span:before,.transparent-header .site-header.business-heading:not(.shrink) .hc-nav-trigger span:after {background-color: ' . $transparent_header_color . ';}';
@@ -652,7 +622,9 @@ function envo_extra_enqueue_header_css() {
 		}
 	}
 
-	wp_add_inline_style( 'envo-extra', $css, 9999 );
+	if ( $css ) {
+		wp_add_inline_style( 'envo-extra', $css );
+	}
 }
 
 add_action( 'wp_enqueue_scripts', 'envo_extra_enqueue_header_css', 9999 );
@@ -690,16 +662,16 @@ add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'envo_action_l
 
 function envo_action_links( $links ) {
 	$links[ 'install_demos' ]	 = sprintf( '<a href="%1$s" class="install-demos">%2$s</a>', esc_url( admin_url( 'themes.php?page=envothemes-panel-install-demos' ) ), esc_html__( 'Install Demos', 'envo-extra' ) );
-	$theme					 = wp_get_theme();
-	if ( 'Enwoo' == $theme->name || 'enwoo' == $theme->template ) {
+	$slug					 = envo_extra_supported_theme();
+	if ( 'enwoo' === $slug ) {
 		$url = 'https://enwoo-wp.com/enwoo-pro/';
-	} elseif ( 'Entr' == $theme->name || 'entr' == $theme->template ) {
-		$url = 'https://envothemes.com/product/envo-pro/';
+	} elseif ( 'envo-royal' === $slug ) {
+		$url = 'https://envothemes.com/product/envo-royal-pro/';
 	} else {
 		$url = 'https://envothemes.com/';
 	}
-	if ( !envo_extra_check_for_pro( 'enwoo' ) ) {
-		$links[ 'go_pro' ] = sprintf( '<a href="%1$s" target="_blank" class="elementor-plugins-gopro">%2$s</a>', esc_url( $url ), esc_html__( 'Go Pro', 'envo-extra' ) );
+	if ( !$slug || !envo_extra_check_for_pro( $slug ) ) {
+		$links[ 'go_pro' ] = sprintf( '<a href="%1$s" target="_blank" rel="noopener" class="elementor-plugins-gopro">%2$s</a>', esc_url( $url ), esc_html__( 'Go Pro', 'envo-extra' ) );
 	}
 	return $links;
 }

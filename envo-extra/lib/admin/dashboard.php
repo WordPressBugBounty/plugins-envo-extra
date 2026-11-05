@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
 /**
  * Add theme dashboard page
  */
@@ -93,7 +97,7 @@ if (!function_exists('envo_extra_admin_scripts')) :
      * Enqueue scripts for admin page only: Theme info page
      */
     function envo_extra_admin_scripts($hook) {
-        wp_enqueue_style('enwoo-admin-css', ENVO_EXTRA_PLUGIN_URL . '/css/admin/admin.css');
+        wp_enqueue_style('enwoo-admin-css', ENVO_EXTRA_PLUGIN_URL . 'css/admin/admin.css', array(), ENVO_EXTRA_CURRENT_VERSION);
         if ($hook === 'appearance_page_et_theme') {
             // Add recommend plugin css
             wp_enqueue_style('plugin-install');
@@ -113,16 +117,18 @@ function envo_extra_theme_info() {
 	$theme_data = wp_get_theme();
     $actions = envo_extra_get_actions_required();
     $number_count = $actions['number_notice'];
-	$page_title = sprintf(esc_html__('%1$s dashboard', 'envo-extra'), $theme_data->Name) ;
+	/* translators: %1$s: theme name */
+	$page_title = sprintf(esc_html__('%1$s dashboard', 'envo-extra'), esc_html($theme_data->Name));
     if ($number_count > 0) {
         /* translators: %1$s: replaced with number (counter) */
         $update_label = sprintf(_n('%1$s action required', '%1$s actions required', absint($number_count), 'envo-extra'), absint($number_count));
         $count = "<span class='update-plugins count-" . esc_attr($number_count) . "' title='" . esc_attr($update_label) . "'><span class='update-count'>" . number_format_i18n($number_count) . "</span></span>";
         /* translators: %s: replaced with number (counter) */
-        $menu_title = sprintf(esc_html__('%1$s theme %2$s', 'envo-extra'), $theme_data->Name, $count);
+        $menu_title = sprintf(esc_html__('%1$s theme %2$s', 'envo-extra'), esc_html($theme_data->Name), $count);
 		
     } else {
-        $menu_title = sprintf(esc_html__('%1$s theme', 'envo-extra'), $theme_data->Name);
+        /* translators: %1$s: theme name */
+        $menu_title = sprintf(esc_html__('%1$s theme', 'envo-extra'), esc_html($theme_data->Name));
     }
 
     add_theme_page($page_title, $menu_title, 'edit_theme_options', 'et_theme', 'envo_extra_theme_info_page');
@@ -133,13 +139,16 @@ function envo_extra_theme_info() {
  *
  * @return bool|null
  */
-add_action('admin_notices', 'envo_extra_admin_notice');
+// The welcome notice is replaced by the Envo Blocks notice (notify.php).
 
 function envo_extra_admin_notice() {
     global $current_user;
     $user_id = $current_user->ID;
     $theme_data = wp_get_theme();
-    if (!get_user_meta($user_id, esc_html($theme_data->get('TextDomain')) . '_notice_ignore')) {
+    if (!current_user_can('edit_theme_options')) {
+        return;
+    }
+    if (!get_user_meta($user_id, sanitize_key($theme_data->get('TextDomain')) . '_notice_ignore')) {
         ?>
         <div class="notice notice-success enwoo-notice">
 
@@ -153,8 +162,8 @@ function envo_extra_admin_notice() {
             <p>
                 <?php
                 /* translators: %1$s: theme name, %2$s link */
-                printf(__('Welcome! Thank you for choosing %1$s! To fully take advantage of the best our theme can offer please make sure you visit our <a href="%2$s">Welcome page</a>', 'envo-extra'), esc_html($theme_data->Name), esc_url(admin_url('themes.php?page=et_theme')));
-                printf('<a href="%1$s" class="notice-dismiss dashicons dashicons-dismiss dashicons-dismiss-icon"></a>', '?' . esc_html($theme_data->get('TextDomain')) . '_notice_ignore=0');
+                echo wp_kses_post(sprintf(__('Welcome! Thank you for choosing %1$s! To fully take advantage of the best our theme can offer please make sure you visit our <a href="%2$s">Welcome page</a>', 'envo-extra'), esc_html($theme_data->Name), esc_url(admin_url('themes.php?page=et_theme'))));
+                printf('<a href="%1$s" class="notice-dismiss dashicons dashicons-dismiss dashicons-dismiss-icon"><span class="screen-reader-text">%2$s</span></a>', esc_url(wp_nonce_url(add_query_arg(sanitize_key($theme_data->get('TextDomain')) . '_notice_ignore', '0'), 'envo_extra_notice_ignore')), esc_html__('Dismiss this notice.', 'envo-extra'));
                 ?>
             </p>
             <p>
@@ -173,12 +182,11 @@ function envo_extra_admin_notice() {
 add_action('admin_init', 'envo_extra_notice_ignore');
 
 function envo_extra_notice_ignore() {
-    global $current_user;
     $theme_data = wp_get_theme();
-    $user_id = $current_user->ID;
+    $key = sanitize_key($theme_data->get('TextDomain')) . '_notice_ignore';
     /* If user clicks to ignore the notice, add that to their user meta */
-    if (isset($_GET[esc_html($theme_data->get('TextDomain')) . '_notice_ignore']) && '0' == $_GET[esc_html($theme_data->get('TextDomain')) . '_notice_ignore']) {
-        add_user_meta($user_id, esc_html($theme_data->get('TextDomain')) . '_notice_ignore', 'true', true);
+    if (isset($_GET[$key], $_GET['_wpnonce']) && '0' === $_GET[$key] && wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'envo_extra_notice_ignore')) {
+        add_user_meta(get_current_user_id(), $key, 'true', true);
     }
 }
 
@@ -248,25 +256,24 @@ function envo_extra_render_recommend_plugins($recommend_plugins = array()) {
 
 function envo_extra_admin_dismiss_actions() {
     // Action for dismiss
-    if (isset($_GET['envo_extra_action_notice'])) {
+    if (isset($_GET['envo_extra_action_notice'], $_GET['_wpnonce']) && current_user_can('edit_theme_options') && wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'envo_extra_action_notice')) {
+        $action_key = sanitize_key(wp_unslash($_GET['envo_extra_action_notice']));
+        $required = envo_extra_get_actions_required();
+        if (!array_key_exists($action_key, $required['actions'])) {
+            return;
+        }
         $actions_dismiss = get_option('envo_extra_actions_dismiss');
         if (!is_array($actions_dismiss)) {
             $actions_dismiss = array();
         }
-        $action_key = sanitize_text_field(wp_unslash($_GET['envo_extra_action_notice']));
         if (isset($actions_dismiss[$action_key]) && $actions_dismiss[$action_key] == 'hide') {
             $actions_dismiss[$action_key] = 'show';
         } else {
             $actions_dismiss[$action_key] = 'hide';
         }
         update_option('envo_extra_actions_dismiss', $actions_dismiss);
-        $url = null;
-        if (isset($_SERVER['REQUEST_URI'])) { // Input var okay.
-            $url = sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI']));
-            $url = remove_query_arg('envo_extra_action_notice', $url);
-        }
-        wp_redirect($url);
-        die();
+        wp_safe_redirect(admin_url('themes.php?page=et_theme&tab=actions_required'));
+        exit;
     }
 }
 
@@ -277,8 +284,8 @@ add_action('envo_extra_recommended_title', 'envo_extra_recommended_title_constru
 function envo_extra_recommended_title_construct() {
     // Check for current viewing tab
     $tab = null;
-    if (isset($_GET['tab'])) {
-        $tab = sanitize_text_field(wp_unslash($_GET['tab']));
+    if (isset($_GET['tab'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- only selects the visible tab
+        $tab = sanitize_text_field(wp_unslash($_GET['tab'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
     } else {
         $tab = null;
     }
@@ -286,7 +293,7 @@ function envo_extra_recommended_title_construct() {
     $number_action = absint($actions_r['number_notice']);
     $actions = $actions_r['actions'];
     ?>
-    <a href="?page=et_theme&tab=actions_required" class="nav-tab<?php echo $tab == 'actions_required' ? ' nav-tab-active' : null; ?>"><?php
+    <a href="<?php echo esc_url(admin_url('themes.php?page=et_theme&tab=actions_required')); ?>" class="nav-tab<?php echo $tab == 'actions_required' ? ' nav-tab-active' : null; ?>"><?php
         esc_html_e('Recommended Actions', 'envo-extra');
         echo ( $number_action > 0 ) ? '<span class="theme-action-count">' . absint($number_action) . '</span>' : '';
         ?>
@@ -299,13 +306,13 @@ add_action('envo_extra_import_title', 'envo_extra_recommended_import_construct')
 function envo_extra_recommended_import_construct() {
     // Check for current viewing tab
     $tab = null;
-    if (isset($_GET['tab'])) {
-        $tab = sanitize_text_field(wp_unslash($_GET['tab']));
+    if (isset($_GET['tab'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- only selects the visible tab
+        $tab = sanitize_text_field(wp_unslash($_GET['tab'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
     } else {
         $tab = null;
     }
     ?>
-        <a href="themes.php?page=envothemes-panel-install-demos" class="nav-tab<?php echo $tab == 'import_data' ? ' nav-tab-active' : null; ?>"><?php esc_html_e('One Click Demo Import', 'envo-extra') ?></a>
+        <a href="<?php echo esc_url(admin_url('themes.php?page=envothemes-panel-install-demos')); ?>" class="nav-tab<?php echo $tab == 'import_data' ? ' nav-tab-active' : null; ?>"><?php esc_html_e('One Click Demo Import', 'envo-extra') ?></a>
     <?php
 
 }
@@ -317,19 +324,23 @@ function envo_extra_theme_info_page() {
 	$docs = ( 'Enwoo' == $theme_data->name || 'enwoo' == $theme_data->template ) ? 'https://enwoo-wp.com/docs/enwoo-documentation/' : 'https://envothemes.com/docs/docs/' . $theme_data->template ;
 	$contact = ( 'Enwoo' == $theme_data->name || 'enwoo' == $theme_data->template ) ? 'https://enwoo-wp.com/contact/' : 'https://envothemes.com/contact/';
 	
-    if (isset($_GET['envo_extra_action_dismiss'])) {
-        $actions_dismiss = get_option('envo_extra_actions_dismiss');
-        if (!is_array($actions_dismiss)) {
-            $actions_dismiss = array();
+    if (isset($_GET['envo_extra_action_dismiss'], $_GET['_wpnonce']) && wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'envo_extra_action_notice')) {
+        $action_key = sanitize_key(wp_unslash($_GET['envo_extra_action_dismiss']));
+        $required = envo_extra_get_actions_required();
+        if (array_key_exists($action_key, $required['actions'])) {
+            $actions_dismiss = get_option('envo_extra_actions_dismiss');
+            if (!is_array($actions_dismiss)) {
+                $actions_dismiss = array();
+            }
+            $actions_dismiss[$action_key] = 'dismiss';
+            update_option('envo_extra_actions_dismiss', $actions_dismiss);
         }
-        $actions_dismiss[sanitize_text_field(wp_unslash($_GET['envo_extra_action_dismiss']))] = 'dismiss';
-        update_option('envo_extra_actions_dismiss', $actions_dismiss);
     }
 
     // Check for current viewing tab
     $tab = null;
-    if (isset($_GET['tab'])) {
-        $tab = sanitize_text_field(wp_unslash($_GET['tab']));
+    if (isset($_GET['tab'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- only selects the visible tab
+        $tab = sanitize_text_field(wp_unslash($_GET['tab'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
     } else {
         $tab = null;
     }
@@ -338,7 +349,7 @@ function envo_extra_theme_info_page() {
     $number_action = $actions_r['number_notice'];
     $actions = $actions_r['actions'];
 
-    $current_action_link = esc_url(admin_url('themes.php?page=et_theme&tab=actions_required'));
+    $current_action_link = admin_url('themes.php?page=et_theme&tab=actions_required');
 
     $recommend_plugins = get_theme_support('recommend-plugins');
     if (is_array($recommend_plugins) && isset($recommend_plugins[0])) {
@@ -356,7 +367,7 @@ function envo_extra_theme_info_page() {
         </h1>
         <div class="about-text"><?php echo esc_html($theme_data->Description); ?></div>
         <h2 class="nav-tab-wrapper">
-            <a href="?page=et_theme" class="nav-tab<?php echo is_null($tab) ? ' nav-tab-active' : null; ?>"><?php echo esc_html($theme); ?></a>
+            <a href="<?php echo esc_url(admin_url('themes.php?page=et_theme')); ?>" class="nav-tab<?php echo is_null($tab) ? ' nav-tab-active' : null; ?>"><?php echo esc_html($theme); ?></a>
             <?php do_action('envo_extra_recommended_title'); ?>
             <?php do_action('envo_extra_import_title'); ?>
 
@@ -388,7 +399,7 @@ function envo_extra_theme_info_page() {
                                 ?>
                             </p>
                             <p>
-                                <a href="<?php echo esc_url($docs); ?>" target="_blank" class="button button-secondary">
+                                <a href="<?php echo esc_url($docs); ?>" target="_blank" rel="noopener" class="button button-secondary">
                                     <?php
                                     /* translators: %s theme name */
                                     printf(esc_html__('%s Documentation', 'envo-extra'), esc_html($theme));
@@ -399,13 +410,13 @@ function envo_extra_theme_info_page() {
                         <div class="theme_link">
                             <h3><?php esc_html_e('Having trouble? Need support?', 'envo-extra'); ?></h3>
                             <p>
-                                <a href="<?php echo esc_url($contact); ?>" target="_blank" class="button button-secondary"><?php esc_html_e('Contact us', 'envo-extra'); ?></a>
+                                <a href="<?php echo esc_url($contact); ?>" target="_blank" rel="noopener" class="button button-secondary"><?php esc_html_e('Contact us', 'envo-extra'); ?></a>
                             </p>
                         </div>
                     </div>
 
                     <div class="theme_info_right">
-                        <img src="<?php echo esc_url(get_stylesheet_directory_uri()); ?>/screenshot.png" />
+                        <img src="<?php echo esc_url(get_stylesheet_directory_uri() . '/screenshot.png'); ?>" alt="<?php echo esc_attr($theme); ?>" />
                     </div>
                 </div>
             </div>
@@ -417,7 +428,7 @@ function envo_extra_theme_info_page() {
 
                     <?php if ($actions['recommend_plugins'] == 'active') { ?>
                         <div id="plugin-filter" class="recommend-plugins action-required">
-                            <a  title="" class="dismiss" href="<?php echo esc_url(add_query_arg(array('envo_extra_action_notice' => 'recommend_plugins'), $current_action_link)); ?>">
+                            <a  title="" class="dismiss" href="<?php echo esc_url(wp_nonce_url(add_query_arg(array('envo_extra_action_notice' => 'recommend_plugins'), $current_action_link), 'envo_extra_action_notice')); ?>">
                                 <?php if ($actions_r['hide_by_click']['recommend_plugins'] == 'hide') { ?>
                                     <span class="dashicons dashicons-hidden"></span>
                                 <?php } else { ?>

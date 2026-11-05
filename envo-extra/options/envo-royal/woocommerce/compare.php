@@ -1,4 +1,9 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
+
 
 Kirki::add_section('woo_compare_section', array(
     'title' => esc_attr__('Compare', 'envo-extra'),

@@ -673,10 +673,8 @@ class Button extends Widget_Base {
 
 
 		$html_tag	 = ( $settings[ 'link' ][ 'url' ] ) ? 'a' : 'span';
-		$attr		 = ( $settings[ 'button_css_id' ] ) ? ' id="' . esc_html($settings[ 'button_css_id' ]) . '"' : '';
-		$attr .= $settings[ 'link' ][ 'is_external' ] ? ' target="_blank"' : '';
-		$attr .= $settings[ 'link' ][ 'nofollow' ] ? ' rel="nofollow"' : '';
-		$attr .= $settings[ 'link' ][ 'url' ] ? ' href="' . esc_url($settings[ 'link' ][ 'url' ]) . '"' : '';
+		$attr		 = ( $settings[ 'button_css_id' ] ) ? ' id="' . esc_attr($settings[ 'button_css_id' ]) . '"' : '';
+		$attr .= envo_extra_link_attributes( $settings[ 'link' ] );
 
 		$hover_animation = ( '2d-transition' === $settings[ 'hover_animation' ] ) ? 'envo-extra-button-2d-animation ' . $settings[ 'hover_2d_css_animation' ] : ( ( 'background-transition' === $settings[ 'hover_animation' ] ) ? 'envo-extra-button-bg-animation ' . $settings[ 'hover_background_css_animation' ] : ( ( 'unique' === $settings[ 'hover_animation' ] ) ? 'envo-extra-elementor-button-hover-style-' . $settings[ 'hover_unique_animation' ] : 'envo-extra-elementor-button-animation-none' ) );
 		?>

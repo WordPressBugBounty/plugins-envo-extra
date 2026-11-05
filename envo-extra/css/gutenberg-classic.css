@@ -1,0 +1,16 @@
+/*
+ * Layout fallbacks for classic themes without theme.json (loaded only for them). Themes with theme.json
+ * lay out the blocks themselves: these rules would override the block gaps and the content widths.
+ */
+.is-layout-flex {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5em;
+}
+[class*="__inner-container"] .wp-block-group:not(.alignfull):not(.alignwide):not(.alignleft):not(.alignright),
+[class*="__inner-container"] .wp-block-cover:not(.alignfull):not(.alignwide):not(.alignleft):not(.alignright) {
+    max-width: 1280px;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}

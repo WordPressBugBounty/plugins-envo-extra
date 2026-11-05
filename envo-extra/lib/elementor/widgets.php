@@ -5,6 +5,28 @@ if ( !defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Escaped attributes (href, target, rel) for an Elementor URL control value.
+ */
+function envo_extra_link_attributes( $link ) {
+	$attr	 = '';
+	$rel	 = array();
+	if ( !empty( $link[ 'url' ] ) ) {
+		$attr .= ' href="' . esc_url( $link[ 'url' ] ) . '"';
+	}
+	if ( !empty( $link[ 'is_external' ] ) ) {
+		$attr	 .= ' target="_blank"';
+		$rel[]	 = 'noopener';
+	}
+	if ( !empty( $link[ 'nofollow' ] ) ) {
+		$rel[] = 'nofollow';
+	}
+	if ( $rel ) {
+		$attr .= ' rel="' . esc_attr( implode( ' ', $rel ) ) . '"';
+	}
+	return $attr;
+}
+
+/**
  * Custom widgets for Elementor
  *
  * This class handles custom widgets for Elementor
@@ -79,14 +101,14 @@ final class Enwoo_Extra_Elementor_Extension {
 	public function widget_styles() {
 
 		foreach ( $this->modules as $key => $value ) {
-			wp_register_style( 'envo-extra-' . $key . '', ENVO_EXTRA_PLUGIN_URL . 'lib/elementor/assets/css/' . $key . '/' . $key . '.css' );
+			wp_register_style( 'envo-extra-' . $key . '', ENVO_EXTRA_PLUGIN_URL . 'lib/elementor/assets/css/' . $key . '/' . $key . '.css', array(), ENVO_EXTRA_CURRENT_VERSION );
 		}
-		wp_register_style( 'font-awesome-5-all', ELEMENTOR_ASSETS_URL . 'lib/font-awesome/css/all.min.css', false );
+		wp_register_style( 'font-awesome-5-all', ELEMENTOR_ASSETS_URL . 'lib/font-awesome/css/all.min.css', false, ELEMENTOR_VERSION );
 	}
 
 	public function widget_styles_preview() {
 		foreach ( $this->modules as $key => $value ) {
-			wp_register_style( 'envo-extra-' . $key . '', ENVO_EXTRA_PLUGIN_URL . 'lib/elementor/assets/css/' . $key . '/' . $key . '.css' );
+			wp_register_style( 'envo-extra-' . $key . '', ENVO_EXTRA_PLUGIN_URL . 'lib/elementor/assets/css/' . $key . '/' . $key . '.css', array(), ENVO_EXTRA_CURRENT_VERSION );
 		}
 	}
 

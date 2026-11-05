@@ -159,14 +159,14 @@ class ReactSelect extends Base {
 		// @link https://react-select.com/props
 		$this->json['isClearable'] = $this->clearable;
 		$this->json['isMulti']     = $this->multiple;
-		$this->json['placeholder'] = ( $this->placeholder ) ? $this->placeholder : esc_html__( 'Select...', 'kirki' );
+		$this->json['placeholder'] = ( $this->placeholder ) ? $this->placeholder : esc_html__( 'Select...', 'envo-extra' );
 
 		// Will be a custom implementation, couldn't find an official prop to set this in react-select.
 		$this->json['maxSelectionNumber'] = $this->max_selection_number;
 
 		$this->json['messages'] = [
 			// translators: %s is the limit of selection number.
-			'maxLimitReached' => sprintf( esc_html__( 'You can only select %s items', 'kirki' ), $this->max_selection_number ),
+			'maxLimitReached' => sprintf( esc_html__( 'You can only select %s items', 'envo-extra' ), $this->max_selection_number ),
 		];
 
 	}

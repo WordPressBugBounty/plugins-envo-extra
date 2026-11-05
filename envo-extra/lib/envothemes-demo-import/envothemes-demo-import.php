@@ -6,7 +6,7 @@
  * Version: 1.2.2
  * Author: EnvoThemes
  * Author URI: https://envothemes.com
- * Text Domain: envothemes-demo-import
+ * Text Domain: envo-extra
  * Domain Path: /languages/
  *
  */
@@ -95,7 +95,6 @@ final class EnvoThemes_Demo_Import {
 
 		register_activation_hook( __FILE__, array( $this, 'install' ) );
 
-		add_action( 'init', array( $this, 'load_plugin_textdomain' ) );
 
 		// Demos scripts
 		add_action( 'admin_enqueue_scripts', array( $this, 'scripts' ) );
@@ -109,7 +108,10 @@ final class EnvoThemes_Demo_Import {
 
 	public static function scripts() {
 
-		wp_enqueue_style( 'envo-notices', plugins_url( 'includes/panel/assets/css/notify.css', __FILE__ ) );
+		// Only needed while the Envo Blocks notice can show
+		if ( function_exists( 'envo_extra_envo_blocks_state' ) && envo_extra_envo_blocks_state() ) {
+			wp_enqueue_style( 'envo-notices', plugins_url( 'includes/panel/assets/css/notify.css', __FILE__ ), array(), ENVO_EXTRA_CURRENT_VERSION );
+		}
 	}
 
 	/**
@@ -137,7 +139,7 @@ final class EnvoThemes_Demo_Import {
 	 * @return  void
 	 */
 	public function load_plugin_textdomain() {
-		load_plugin_textdomain( 'envothemes-demo-import', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+		// Strings use the envo-extra text domain, loaded by the main plugin.
 	}
 
 	/**
@@ -146,7 +148,7 @@ final class EnvoThemes_Demo_Import {
 	 * @since 1.0.0
 	 */
 	public function __clone() {
-		_doing_it_wrong( __FUNCTION__, esc_html__( 'Cheatin&#8217; huh?' ), '1.0.0' );
+		_doing_it_wrong( __FUNCTION__, esc_html__( 'Cheatin&#8217; huh?', 'envo-extra' ), '1.0.0' );
 	}
 
 	/**
@@ -155,7 +157,7 @@ final class EnvoThemes_Demo_Import {
 	 * @since 1.0.0
 	 */
 	public function __wakeup() {
-		_doing_it_wrong( __FUNCTION__, esc_html__( 'Cheatin&#8217; huh?' ), '1.0.0' );
+		_doing_it_wrong( __FUNCTION__, esc_html__( 'Cheatin&#8217; huh?', 'envo-extra' ), '1.0.0' );
 	}
 
 	/**
@@ -219,7 +221,7 @@ register_deactivation_hook( __FILE__, 'envo_extra_deactivate' );
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'envothemes_action_links' );
 
 function envothemes_action_links( $links ) {
-	$links[ 'install_demos' ] = sprintf( '<a href="%1$s" class="install-demos">%2$s</a>', esc_url( admin_url( 'themes.php?page=envothemes-panel-install-demos' ) ), esc_html__( 'Install Demos', 'envothemes-demo-import' ) );
+	$links[ 'install_demos' ] = sprintf( '<a href="%1$s" class="install-demos">%2$s</a>', esc_url( admin_url( 'themes.php?page=envothemes-panel-install-demos' ) ), esc_html__( 'Install Demos', 'envo-extra' ) );
 	return $links;
 }
 

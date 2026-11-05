@@ -49,10 +49,7 @@ class Scripts {
 	 * @return void
 	 */
 	public function register_scripts() {
-		$folder_url = trailingslashit( URL::get_from_path( __DIR__ ) );
-		wp_register_script( 'wp-polyfill', $folder_url . 'scripts/wp-polyfill.js', [], '7.0.0', false );
-		wp_register_script( 'wp-hooks', $folder_url . 'scripts/hooks.js', [ 'wp-polyfill' ], '2.2.0', false );
-		wp_register_script( 'wp-i18n', $folder_url . 'scripts/i18n.js', [ 'wp-polyfill' ], '3.3.0', false );
+		// The scripts are in WordPress since 5.0 (Envo Extra requires 5.3), the backported copies were removed.
 	}
 
 }

@@ -1943,9 +1943,7 @@ class Pricing extends Widget_Base {
 
 			<?php
 			if ( 'before_features' === $settings[ 'button_position' ] && $settings[ 'button_title' ] ) {
-				$target		 = $settings[ 'button_link' ][ 'is_external' ] ? ' target="_blank"' : '';
-				$nofollow	 = $settings[ 'button_link' ][ 'nofollow' ] ? ' rel="nofollow"' : '';
-				echo '<div class="envo-extra-pricing-btn-wrapper"><a class="envo-extra-pricing-btn" href="' . esc_url( $settings[ 'button_link' ][ 'url' ] ) . '"' . esc_attr( $target ) . esc_attr( $nofollow ) . '>' . $settings[ 'button_title' ] . '</a></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo '<div class="envo-extra-pricing-btn-wrapper"><a class="envo-extra-pricing-btn"' . envo_extra_link_attributes( $settings[ 'button_link' ] ) . '>' . wp_kses_post( $settings[ 'button_title' ] ) . '</a></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			}
 			?>
 
@@ -2016,9 +2014,7 @@ class Pricing extends Widget_Base {
 
 			<?php
 			if ( 'after_features' === $settings[ 'button_position' ] && $settings[ 'button_title' ] ) {
-				$target		 = $settings[ 'button_link' ][ 'is_external' ] ? ' target="_blank"' : '';
-				$nofollow	 = $settings[ 'button_link' ][ 'nofollow' ] ? ' rel="nofollow"' : '';
-				echo '<div class="envo-extra-pricing-btn-wrapper"><a class="envo-extra-pricing-btn" href="' . esc_url( $settings[ 'button_link' ][ 'url' ] ) . '"' . esc_attr( $target ) . esc_attr( $nofollow ) . '>' . esc_html( $settings[ 'button_title' ] ) . '</a></div>';
+				echo '<div class="envo-extra-pricing-btn-wrapper"><a class="envo-extra-pricing-btn"' . envo_extra_link_attributes( $settings[ 'button_link' ] ) . '>' . esc_html( $settings[ 'button_title' ] ) . '</a></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			}
 			?>
 

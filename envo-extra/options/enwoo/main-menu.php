@@ -1,4 +1,7 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
 
 if ( !class_exists( 'Kirki' ) ) {
 	return;
@@ -348,10 +351,10 @@ Kirki::add_field( 'envo_extra', array(
 	),
 	'choices'			 => array(
 		'labels' => array(
-			'border-top-width'		 => esc_attr__( 'Top', 'textdomain' ),
-			'border-right-width'	 => esc_attr__( 'Right', 'textdomain' ),
-			'border-bottom-width'	 => esc_attr__( 'Bottom', 'textdomain' ),
-			'border-left-width'		 => esc_attr__( 'Left', 'textdomain' ),
+			'border-top-width'		 => esc_attr__( 'Top', 'envo-extra' ),
+			'border-right-width'	 => esc_attr__( 'Right', 'envo-extra' ),
+			'border-bottom-width'	 => esc_attr__( 'Bottom', 'envo-extra' ),
+			'border-left-width'		 => esc_attr__( 'Left', 'envo-extra' ),
 		),
 	),
 	'transport'			 => 'auto',
@@ -391,10 +394,10 @@ Kirki::add_field( 'envo_extra', array(
 	),
 	'choices'			 => array(
 		'labels' => array(
-			'border-top-left-radius'	 => esc_attr__( 'Top Left', 'textdomain' ),
-			'border-top-right-radius'	 => esc_attr__( 'Top Right', 'textdomain' ),
-			'border-bottom-left-radius'	 => esc_attr__( 'Bottom Left', 'textdomain' ),
-			'border-bottom-right-radius' => esc_attr__( 'Bottom Right', 'textdomain' ),
+			'border-top-left-radius'	 => esc_attr__( 'Top Left', 'envo-extra' ),
+			'border-top-right-radius'	 => esc_attr__( 'Top Right', 'envo-extra' ),
+			'border-bottom-left-radius'	 => esc_attr__( 'Bottom Left', 'envo-extra' ),
+			'border-bottom-right-radius' => esc_attr__( 'Bottom Right', 'envo-extra' ),
 		),
 	),
 	'transport'			 => 'auto',
@@ -555,8 +558,8 @@ Kirki::add_field( 'envo_extra', array(
 	),
 	'choices'			 => array(
 		'labels' => array(
-			'border-top-width'	 => esc_attr__( 'Top', 'textdomain' ),
-			'border-right-width' => esc_attr__( 'Bottom', 'textdomain' ),
+			'border-top-width'	 => esc_attr__( 'Top', 'envo-extra' ),
+			'border-right-width' => esc_attr__( 'Bottom', 'envo-extra' ),
 		),
 	),
 	'transport'			 => 'auto',
@@ -589,10 +592,10 @@ Kirki::add_field( 'envo_extra', array(
 	),
 	'choices'			 => array(
 		'labels' => array(
-			'border-top-left-radius'	 => esc_attr__( 'Top Left', 'textdomain' ),
-			'border-top-right-radius'	 => esc_attr__( 'Top Right', 'textdomain' ),
-			'border-bottom-left-radius'	 => esc_attr__( 'Bottom Left', 'textdomain' ),
-			'border-bottom-right-radius' => esc_attr__( 'Bottom Right', 'textdomain' ),
+			'border-top-left-radius'	 => esc_attr__( 'Top Left', 'envo-extra' ),
+			'border-top-right-radius'	 => esc_attr__( 'Top Right', 'envo-extra' ),
+			'border-bottom-left-radius'	 => esc_attr__( 'Bottom Left', 'envo-extra' ),
+			'border-bottom-right-radius' => esc_attr__( 'Bottom Right', 'envo-extra' ),
 		),
 	),
 	'transport'			 => 'auto',

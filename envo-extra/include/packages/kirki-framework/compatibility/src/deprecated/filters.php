@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
 // phpcs:ignoreFile
 
 add_filter( 'kirki_config', function( $args ) {

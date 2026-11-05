@@ -99,21 +99,21 @@ class Dashicons extends Base {
 			<# } else { #>
 				<#
 				var dashiconSections = {
-					'admin-menu': '<?php esc_html_e( 'Admin Menu', 'kirki' ); ?>',
-					'welcome-screen': '<?php esc_html_e( 'Welcome Screen', 'kirki' ); ?>',
-					'post-formats': '<?php esc_html_e( 'Post Formats', 'kirki' ); ?>',
-					'media': '<?php esc_html_e( 'Media', 'kirki' ); ?>',
-					'image-editing': '<?php esc_html_e( 'Image Editing', 'kirki' ); ?>',
+					'admin-menu': '<?php esc_html_e( 'Admin Menu', 'envo-extra' ); ?>',
+					'welcome-screen': '<?php esc_html_e( 'Welcome Screen', 'envo-extra' ); ?>',
+					'post-formats': '<?php esc_html_e( 'Post Formats', 'envo-extra' ); ?>',
+					'media': '<?php esc_html_e( 'Media', 'envo-extra' ); ?>',
+					'image-editing': '<?php esc_html_e( 'Image Editing', 'envo-extra' ); ?>',
 					'tinymce': 'TinyMCE',
-					'posts': '<?php esc_html_e( 'Posts', 'kirki' ); ?>',
-					'sorting': '<?php esc_html_e( 'Sorting', 'kirki' ); ?>',
-					'social': '<?php esc_html_e( 'Social', 'kirki' ); ?>',
+					'posts': '<?php esc_html_e( 'Posts', 'envo-extra' ); ?>',
+					'sorting': '<?php esc_html_e( 'Sorting', 'envo-extra' ); ?>',
+					'social': '<?php esc_html_e( 'Social', 'envo-extra' ); ?>',
 					'wordpress_org': 'WordPress',
-					'products': '<?php esc_html_e( 'Products', 'kirki' ); ?>',
-					'taxonomies': '<?php esc_html_e( 'Taxonomies', 'kirki' ); ?>',
-					'widgets': '<?php esc_html_e( 'Widgets', 'kirki' ); ?>',
-					'notifications': '<?php esc_html_e( 'Notifications', 'kirki' ); ?>',
-					'misc': '<?php esc_html_e( 'Miscelaneous', 'kirki' ); ?>'
+					'products': '<?php esc_html_e( 'Products', 'envo-extra' ); ?>',
+					'taxonomies': '<?php esc_html_e( 'Taxonomies', 'envo-extra' ); ?>',
+					'widgets': '<?php esc_html_e( 'Widgets', 'envo-extra' ); ?>',
+					'notifications': '<?php esc_html_e( 'Notifications', 'envo-extra' ); ?>',
+					'misc': '<?php esc_html_e( 'Miscelaneous', 'envo-extra' ); ?>'
 				};
 				#>
 				<# _.each( dashiconSections, function( sectionLabel, sectionKey ) { #>

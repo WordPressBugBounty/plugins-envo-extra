@@ -1,4 +1,9 @@
-<?php return array(
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
+return array(
     'root' => array(
         'pretty_version' => '4.0.24',
         'version' => '4.0.24.0',

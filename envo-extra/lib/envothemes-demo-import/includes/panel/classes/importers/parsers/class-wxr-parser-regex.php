@@ -93,7 +93,7 @@ class WXR_Parser_Regex {
 		}
 
 		if ( ! $wxr_version )
-			return new WP_Error( 'WXR_parse_error', __( 'This does not appear to be a WXR file, missing/invalid WXR version number', 'wordpress-importer' ) );
+			return new WP_Error( 'WXR_parse_error', __( 'This does not appear to be a WXR file, missing/invalid WXR version number', 'envo-extra' ) );
 
 		return array(
 			'authors' => $this->authors,
@@ -295,7 +295,7 @@ class WXR_Parser_Regex {
 	function fopen( $filename, $mode = 'r' ) {
 		if ( $this->has_gzip )
 			return gzopen( $filename, $mode );
-		return fopen( $filename, $mode );
+		return fopen( $filename, $mode ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- line by line reading of the downloaded import file
 	}
 
 	function feof( $fp ) {
@@ -313,6 +313,6 @@ class WXR_Parser_Regex {
 	function fclose( $fp ) {
 		if ( $this->has_gzip )
 			return gzclose( $fp );
-		return fclose( $fp );
+		return fclose( $fp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- see fopen()
 	}
 }

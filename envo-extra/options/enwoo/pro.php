@@ -1,5 +1,9 @@
 <?php
- 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
+
 Kirki::add_field( 'envo_extra', array(
 	'type'		 => 'custom',
 	'settings'	 => 'sticky_menu_pro',
@@ -16,13 +20,6 @@ Kirki::add_field( 'envo_extra', array(
 	'default'	 => '<a href="https://enwoo-wp.com/enwoo-pro/#sticky-sidebar" target="_blank"><img src="' . plugin_dir_url( __FILE__ ) . 'assets/img/pro/sticky-sidebar.jpg"/></a>',
 ) );
 
-Kirki::add_field( 'envo_extra', array(
-	'type'		 => 'custom',
-	'settings'	 => 'disable_credits_pro',
-	'section'	 => 'footer_credits',
-	'priority'	 => 9,
-	'default'	 => '<a href="https://enwoo-wp.com/enwoo-pro/#footer-credits" target="_blank"><img src="' . plugin_dir_url( __FILE__ ) . 'assets/img/pro/footer-credits.jpg"/></a>',
-) );
 if ( envo_extra_check_for_elementor() ) { // Enable only with Elementor
 	Kirki::add_field( 'envo_extra', array(
 		'type'		 => 'custom',

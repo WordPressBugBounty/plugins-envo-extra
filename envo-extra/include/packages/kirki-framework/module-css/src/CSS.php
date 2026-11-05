@@ -130,7 +130,7 @@ class CSS {
 
 		if ( ! is_array( $args['output'] ) ) {
 			/* translators: The field ID where the error occurs. */
-			_doing_it_wrong( __METHOD__, sprintf( esc_html__( '"output" invalid format in field %s. The "output" argument should be defined as an array of arrays.', 'kirki' ), esc_html( $args['settings'] ) ), '3.0.10' );
+			_doing_it_wrong( __METHOD__, sprintf( esc_html__( '"output" invalid format in field %s. The "output" argument should be defined as an array of arrays.', 'envo-extra' ), esc_html( $args['settings'] ) ), '3.0.10' );
 			$args['output'] = array(
 				array(
 					'element' => $args['output'],
@@ -141,7 +141,7 @@ class CSS {
 		// Convert to array of arrays if needed.
 		if ( isset( $args['output']['element'] ) ) {
 			/* translators: The field ID where the error occurs. */
-			_doing_it_wrong( __METHOD__, sprintf( esc_html__( '"output" invalid format in field %s. The "output" argument should be defined as an array of arrays.', 'kirki' ), esc_html( $args['settings'] ) ), '3.0.10' );
+			_doing_it_wrong( __METHOD__, sprintf( esc_html__( '"output" invalid format in field %s. The "output" argument should be defined as an array of arrays.', 'envo-extra' ), esc_html( $args['settings'] ) ), '3.0.10' );
 			$args['output'] = array( $args['output'] );
 		}
 
@@ -217,7 +217,7 @@ class CSS {
 		$inline_styles_id = apply_filters( 'kirki_inline_styles_id', self::$inline_styles_id );
 
 		echo '<style id="' . esc_attr( $inline_styles_id ) . '">';
-		echo $inline_styles;
+		echo wp_strip_all_tags( $inline_styles ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSS built from sanitized settings, tags stripped
 		echo '</style>';
 
 	}

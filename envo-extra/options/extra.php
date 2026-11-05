@@ -1,4 +1,7 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
 
 /**
  * Reset some theme mod from url in admin area - administrators only
@@ -6,15 +9,31 @@
 add_action( 'admin_init', 'envo_extra_reset_mod' );
 
 function envo_extra_reset_mod() {
-  $current_user = wp_get_current_user();
-  // This will help you reset some theme mods from URL. Perfect if you put something wrong into custom code and it will break your page
-  // Code example:
-  // Reset code added to the HEAD: ?reset-theme-mods=1&option=header-code
-  // Reset code added to the footer: ?reset-theme-mods=1&option=footer-code
-  // You can use it if you are site administrator and your are in admin area.
-  if ( isset( $_GET['reset-theme-mods'] ) && '1' === $_GET['reset-theme-mods'] && $_GET['option'] != '' && is_admin() !== false && current_user_can('administrator') ) {
-      remove_theme_mod( $_GET['option'] );
-  }
+	// This will help you reset some theme mods from URL. Perfect if you put something wrong into custom code and it will break your page
+	// Code example:
+	// Reset code added to the HEAD: wp-admin/?reset-theme-mods=1&option=header-code
+	// Reset code added to the footer: wp-admin/?reset-theme-mods=1&option=footer-code
+	// You can use it if you are site administrator and your are in admin area. The reset has to be confirmed in the admin notice.
+	if ( !isset( $_GET[ 'reset-theme-mods' ], $_GET[ 'option' ] ) || '1' !== $_GET[ 'reset-theme-mods' ] || !current_user_can( 'edit_theme_options' ) ) {
+		return;
+	}
+	$option = sanitize_key( wp_unslash( $_GET[ 'option' ] ) );
+	if ( '' === $option ) {
+		return;
+	}
+	if ( isset( $_GET[ '_wpnonce' ] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_GET[ '_wpnonce' ] ) ), 'envo_extra_reset_mod_' . $option ) ) {
+		remove_theme_mod( $option );
+		add_action( 'admin_notices', function() use ( $option ) {
+			/* translators: %s: theme option name */
+			echo '<div class="notice notice-success"><p>' . esc_html( sprintf( __( 'Theme option "%s" has been reset.', 'envo-extra' ), $option ) ) . '</p></div>';
+		} );
+		return;
+	}
+	add_action( 'admin_notices', function() use ( $option ) {
+		$url = wp_nonce_url( add_query_arg( array( 'reset-theme-mods' => '1', 'option' => $option ), admin_url() ), 'envo_extra_reset_mod_' . $option );
+		/* translators: %s: theme option name */
+		echo '<div class="notice notice-warning"><p>' . esc_html( sprintf( __( 'Do you really want to reset the theme option "%s"?', 'envo-extra' ), $option ) ) . ' <a class="button button-primary" href="' . esc_url( $url ) . '">' . esc_html__( 'Reset', 'envo-extra' ) . '</a></p></div>';
+	} );
 }
 
 function envo_extra_envo_pro_is_activated() {
@@ -40,7 +59,7 @@ if ( 'Entr' == $theme->name || 'entr' == $theme->template || 'Envo One' == $them
 		
 	if (!envo_extra_envo_pro_is_activated()) {	
 		Kirki::add_section( 'envo-pro', array(
-			'title'       => esc_html__( 'Unlock More Options', 'kirki' ),
+			'title'       => esc_html__( 'Unlock More Options', 'envo-extra' ),
 			'type'        => 'link',
 			'button_text' => esc_html__( 'Envo PRO', 'envo-extra' ),
 			'button_url'  => 'https://envothemes.com/product/envo-pro/',
@@ -72,6 +91,7 @@ if ( 'Entr' == $theme->name || 'entr' == $theme->template || 'Envo One' == $them
 		'settings'	 => 'envo_demo_import_demo',
 		'section'	 => 'envo_demo_import',
 		'priority'	 => 9,
+		/* translators: %1$s: link to the documentation */
 		'default'	 => sprintf( __( 'You can import the demo content with just one click. For step-by-step tutorial, see %1$s', 'envo-extra' ), '<a class="documentation" href="' . esc_url( 'https://envothemes.com/docs/docs/'.$docs.'/one-click-demo-import/' ) . '" target="_blank">' . esc_html__( 'documentation', 'envo-extra' ) . '</a>' ),
 	) );
 	Kirki::add_field( 'envo_extra', array(

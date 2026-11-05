@@ -1223,27 +1223,25 @@ class Team extends Widget_Base {
 
 
 		$title_tag	 = ( $settings[ 'title_link' ][ 'url' ] ) ? 'a' : 'h2';
-		$title_attr	 = $settings[ 'title_link' ][ 'is_external' ] ? ' target="_blank"' : '';
-		$title_attr .= $settings[ 'title_link' ][ 'nofollow' ] ? ' rel="nofollow"' : '';
-		$title_attr .= $settings[ 'title_link' ][ 'url' ] ? ' href="' . esc_url($settings[ 'title_link' ][ 'url' ]) . '"' : '';
+		$title_attr = envo_extra_link_attributes( $settings[ 'title_link' ] );
 		?>
 
 		<div class="envo-extra-team-wrapper envo-extra-team-layout-<?php echo esc_attr( $settings[ 'layout' ] ); ?>">
 			<?php if ( $settings[ 'designation' ] && '2' === $settings[ 'layout' ] ) : ?>
-				<h4 class="envo-extra-team-designation"><?php echo esc_attr( $settings[ 'designation' ] ); ?></h4>
+				<h4 class="envo-extra-team-designation"><?php echo esc_html( $settings[ 'designation' ] ); ?></h4>
 			<?php endif; ?>
 
 			<?php if ( $settings[ 'image' ][ 'id' ] || $settings[ 'image' ][ 'url' ] ) : ?>
 				<div class="envo-extra-team-image">
-					<?php echo (!empty( $settings[ 'image' ][ 'id' ] ) ) ? wp_get_attachment_image( $settings[ 'image' ][ 'id' ], $settings[ 'thumbnail_size' ] ) : '<img src="' . esc_url( $settings[ 'image' ][ 'url' ] ) . '">'; ?>
+					<?php echo (!empty( $settings[ 'image' ][ 'id' ] ) ) ? wp_get_attachment_image( $settings[ 'image' ][ 'id' ], $settings[ 'thumbnail_size' ] ) : '<img src="' . esc_url( $settings[ 'image' ][ 'url' ] ) . '" alt="' . esc_attr( $settings[ 'title' ] ) . '">'; ?>
 					<?php if ( '8' === $settings[ 'layout' ] || '9' === $settings[ 'layout' ] ) : ?>
 						<div class="envo-extra-team-inner-content">
 							<?php if ( $settings[ 'title' ] ) : ?>
 								<<?php echo esc_attr( $title_tag ); ?><?php echo wp_kses_data( $title_attr ); ?>
-								class="envo-extra-team-title"><?php echo esc_attr( $settings[ 'title' ] ); ?></<?php echo esc_attr( $title_tag ); ?>>
+								class="envo-extra-team-title"><?php echo esc_html( $settings[ 'title' ] ); ?></<?php echo esc_attr( $title_tag ); ?>>
 							<?php endif; ?>
 							<?php if ( $settings[ 'designation' ] ) : ?>
-								<h4 class="envo-extra-team-designation"><?php echo esc_attr( $settings[ 'designation' ] ); ?></h4>
+								<h4 class="envo-extra-team-designation"><?php echo esc_html( $settings[ 'designation' ] ); ?></h4>
 							<?php endif; ?>
 						</div>
 					<?php endif; ?>
@@ -1252,9 +1250,7 @@ class Team extends Widget_Base {
 							<?php
 							foreach ( $settings[ 'social_icon_list' ] as $i => $icon ) {
 								$html_tag	 = $icon[ 'icon_link' ][ 'url' ] ? 'a' : 'span';
-								$attr		 = $icon[ 'icon_link' ][ 'is_external' ] ? ' target="_blank"' : '';
-								$attr .= $icon[ 'icon_link' ][ 'nofollow' ] ? ' rel="nofollow"' : '';
-								$attr .= $icon[ 'icon_link' ][ 'url' ] ? ' href="' . esc_url($icon[ 'icon_link' ][ 'url' ]) . '"' : '';
+								$attr = envo_extra_link_attributes( $icon[ 'icon_link' ] );
 								?>
 								<li class="elementor-repeater-item-<?php echo esc_attr( $icon[ '_id' ] ); ?>">
 									<<?php echo esc_attr( $html_tag ); ?> <?php echo wp_kses_data( $attr ); ?> class="envo-extra-team-social-icon">
@@ -1270,10 +1266,10 @@ class Team extends Widget_Base {
 				<?php if ( '8' !== $settings[ 'layout' ] && '9' !== $settings[ 'layout' ] ) : ?>
 					<?php if ( $settings[ 'title' ] ) : ?>
 						<<?php echo esc_attr( $title_tag ); ?><?php echo wp_kses_data( $title_attr ); ?>
-						class="envo-extra-team-title"><?php echo esc_attr( $settings[ 'title' ] ); ?></<?php echo esc_attr( $title_tag ); ?>>
+						class="envo-extra-team-title"><?php echo esc_html( $settings[ 'title' ] ); ?></<?php echo esc_attr( $title_tag ); ?>>
 					<?php endif; ?>
 					<?php if ( $settings[ 'designation' ] && '2' !== $settings[ 'layout' ] ) : ?>
-						<h4 class="envo-extra-team-designation"><?php echo esc_attr( $settings[ 'designation' ] ); ?></h4>
+						<h4 class="envo-extra-team-designation"><?php echo esc_html( $settings[ 'designation' ] ); ?></h4>
 					<?php endif; ?>
 				<?php endif; ?>
 				<?php if ( $settings[ 'description' ] ) : ?>
@@ -1285,9 +1281,7 @@ class Team extends Widget_Base {
 						<?php
 						foreach ( $settings[ 'social_icon_list' ] as $i => $icon ) {
 							$html_tag	 = $icon[ 'icon_link' ][ 'url' ] ? 'a' : 'span';
-							$attr		 = $icon[ 'icon_link' ][ 'is_external' ] ? ' target="_blank"' : '';
-							$attr .= $icon[ 'icon_link' ][ 'nofollow' ] ? ' rel="nofollow"' : '';
-							$attr .= $icon[ 'icon_link' ][ 'url' ] ? ' href="' . esc_url($icon[ 'icon_link' ][ 'url' ]) . '"' : '';
+							$attr = envo_extra_link_attributes( $icon[ 'icon_link' ] );
 							?>
 							<li class="elementor-repeater-item-<?php echo esc_attr( $icon[ '_id' ] ); ?>">
 								<<?php echo esc_attr( $html_tag ); ?> <?php echo wp_kses_data( $attr ); ?> class="envo-extra-team-social-icon">

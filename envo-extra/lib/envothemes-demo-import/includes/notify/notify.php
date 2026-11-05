@@ -5,41 +5,10 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * @review_dismiss()
- * @review_pending()
- * @envothemes_review_notice_message()
- * Make all the above functions working.
+ * Outdated PRO plugins - the only notice besides the Envo Blocks one.
  */
-function envothemes_review_notice() {
-
-    envothemes_review_dismiss();
-    envothemes_review_pending();
-
-    $activation_time = get_site_option('envothemes_active_time');
-    $review_dismissal = get_site_option('envothemes_review_dismiss');
-    $maybe_later = get_site_option('envothemes_maybe_later');
-	$onboard = get_site_option('elementor_onboarded');
-	if (!$onboard) {
-        add_site_option('elementor_onboarded', true);
-    }
-
-    if ('yes' == $review_dismissal) {
-        return;
-    }
-
-    if (!$activation_time) {
-        add_site_option('envothemes_active_time', time());
-    }
-
-    $daysinseconds = 2419200; // 1209600 14 Days in seconds.
-    if ('yes' == $maybe_later) {
-        $daysinseconds = 4819200; // 28 Days in seconds.
-    }
-
-    if (time() - $activation_time > $daysinseconds) {
-        add_action('admin_notices', 'envothemes_review_notice_message');
-    }
-	if(
+function envo_extra_check_pro_versions() {
+	if (
 	(defined('ENVO_ROYAL_PRO_CURRENT_VERSION') && version_compare(ENVO_ROYAL_PRO_CURRENT_VERSION, '1.1.1', '<')  ) ||
 	(defined('ENTR_PRO_CURRENT_VERSION') && version_compare(ENTR_PRO_CURRENT_VERSION, '1.3.7', '<') ) ||
 	(defined('ENVO_STOREFRONT_PRO_CURRENT_VERSION') && version_compare(ENVO_STOREFRONT_PRO_CURRENT_VERSION, '1.8.4', '<') ) ||
@@ -50,300 +19,18 @@ function envothemes_review_notice() {
 	(defined('ENWOO_PRO_CURRENT_VERSION') && version_compare(ENWOO_PRO_CURRENT_VERSION, '1.6.3', '<') ) ||
 	(defined('ENVO_ECOMMERCE_PRO_CURRENT_VERSION') && version_compare(ENVO_ECOMMERCE_PRO_CURRENT_VERSION, '2.2.4', '<')  ) ||
 	(defined('ENVO_MAGAZINE_PRO_CURRENT_VERSION') && version_compare(ENVO_MAGAZINE_PRO_CURRENT_VERSION, '2.1.1', '<')  )
-	)	{add_action('admin_notices',  'envo_extra_admin_notice_update_pro' );}
-}
-
-add_action('admin_init', 'envothemes_review_notice');
-
-/**
- * For the notice preview.
- */
-function envothemes_review_notice_message() {
-	if (isset($_SERVER['REQUEST_URI'])) {
-		$server = sanitize_text_field( wp_unslash($_SERVER['REQUEST_URI']));
+	) {
+		add_action('admin_notices', 'envo_extra_admin_notice_update_pro');
 	}
-    $scheme = (parse_url($server, PHP_URL_QUERY)) ? '&' : '?';
-    $url = $server . $scheme . 'envothemes_review_dismiss=yes';
-    $dismiss_url = wp_nonce_url($url, 'envo-review-nonce');
-
-    $_later_link = $server . $scheme . 'envothemes_review_later=yes';
-    $later_url = wp_nonce_url($_later_link, 'envo-review-nonce');
-    $theme = wp_get_theme();
-    $themetemplate = get_stylesheet();
-    $themename = $theme->name;
-    ?>
-
-    <div class="envo-review-notice">
-        <div class="envo-review-thumbnail">
-            <img src="<?php echo esc_url(ENVO_URL) . 'img/et-logo.png'; ?>" alt="">
-        </div>
-        <div class="envo-review-text">
-            <h3><?php esc_html_e('Leave A Review?', 'envothemes-demo-import') ?></h3>
-            <p><?php echo sprintf(esc_html__('We hope you\'ve enjoyed using %1$s theme! Would you consider leaving us a review on WordPress.org?', 'envothemes-demo-import'), esc_html($themename)) ?></p>
-            <ul class="envo-review-ul">
-                <li>
-                    <a href="https://wordpress.org/support/theme/<?php echo esc_html($themetemplate); ?>/reviews/?rate=5#new-post" target="_blank">
-                        <span class="dashicons dashicons-external"></span>
-                        <?php esc_html_e('Sure! I\'d love to!', 'envothemes-demo-import') ?>
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo esc_url($dismiss_url) ?>">
-                        <span class="dashicons dashicons-smiley"></span>
-                        <?php esc_html_e('I\'ve already left a review', 'envothemes-demo-import') ?>
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo esc_url($later_url) ?>">
-                        <span class="dashicons dashicons-calendar-alt"></span>
-                        <?php esc_html_e('Maybe Later', 'envothemes-demo-import') ?>
-                    </a>
-                </li>
-                <li>
-                    <a href="https://envothemes.com/contact/" target="_blank">
-                        <span class="dashicons dashicons-sos"></span>
-                        <?php esc_html_e('I need help!', 'envothemes-demo-import') ?>
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo esc_url($dismiss_url) ?>">
-                        <span class="dashicons dashicons-dismiss"></span>
-                        <?php esc_html_e('Never show again', 'envothemes-demo-import') ?>
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
-
-    <?php
 }
 
-/**
- * For Dismiss! 
- */
-function envothemes_review_dismiss() {
-
-    if (!is_admin() ||
-            !current_user_can('manage_options') ||
-            !isset($_GET['_wpnonce']) ||
-            !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'envo-review-nonce') ||
-            !isset($_GET['envothemes_review_dismiss'])) {
-
-        return;
-    }
-
-    add_site_option('envothemes_review_dismiss', 'yes');
-}
-
-/**
- * For Maybe Later Update.
- */
-function envothemes_review_pending() {
-
-    if (!is_admin() ||
-            !current_user_can('manage_options') ||
-            !isset($_GET['_wpnonce']) ||
-            !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'envo-review-nonce') ||
-            !isset($_GET['envothemes_review_later'])) {
-
-        return;
-    }
-    // Reset Time to current time.
-    update_site_option('envothemes_active_time', time());
-    update_site_option('envothemes_maybe_later', 'yes');
-}
-
-function envothemes_pro_notice() {
-
-    envothemes_pro_dismiss();
-	
-	$theme = wp_get_theme();
-    $themetemplate = $theme->template;
-	$activetheme = str_replace('-', '_', strtoupper($themetemplate));
-
-    $activation_time = get_site_option('envothemes_active_pro_time');
-
-    if (!$activation_time) {
-        add_site_option('envothemes_active_pro_time', time());
-    }
-
-    $daysinseconds = 86400; // 1 Day in seconds.
-
-    if (time() - $activation_time > $daysinseconds) {
-        if (defined($activetheme . '_PRO_CURRENT_VERSION')) {
-            return;
-        }
-		if (preg_match('[envo|enwoo|entr]', $themetemplate) ) {
-			add_action('admin_notices', 'envothemes_pro_notice_message');
-		}
-    }
-}
-
-add_action('admin_init', 'envothemes_pro_notice');
-
-/**
- * For PRO notice 
- */
-function envothemes_pro_notice_message() {
-	if (isset($_SERVER['REQUEST_URI'])) {
-		$server = sanitize_text_field( wp_unslash($_SERVER['REQUEST_URI']));
-	}
-    $scheme = (parse_url($server, PHP_URL_QUERY)) ? '&' : '?';
-    $url = $server . $scheme . 'envothemes_pro_dismiss=yes';
-    $dismiss_url = wp_nonce_url($url, 'envo-pro-nonce');
-	$theme = wp_get_theme();
-    $themetemplate = $theme->template;
-	if ($themetemplate == 'enwoo') {
-		$templateurl = 'https://enwoo-wp.com/enwoo-pro/';
-	} elseif ($themetemplate == 'entr' || $themetemplate == 'envo-one') {
-		$templateurl = 'https://envothemes.com/envo-pro/';
-	} else {
-		$templateurl = 'https://envothemes.com/product/' . $themetemplate . '-pro/';
-	}
-	
-    ?>
-
-    <div class="envo-review-notice">
-        <div class="envo-review-thumbnail">
-            <img src="<?php echo esc_url(ENVO_URL) . 'img/et-logo.png'; ?>" alt="">
-        </div>
-        <div class="envo-review-text">
-            <h3><?php esc_html_e('Go PRO for More Features', 'envothemes-demo-import') ?></h3>
-            <p>
-                <?php echo sprintf(esc_html__('Get the %1$s for more stunning elements, demos and customization options.', 'envothemes-demo-import'), '<a href="'.esc_url($templateurl).'" target="_blank">PRO addon</a>') ?>
-            </p>
-            <ul class="envo-review-ul">
-                <li class="show-mor-message">
-                    <a href="<?php echo esc_url($templateurl) ?>" target="_blank">
-                        <span class="dashicons dashicons-external"></span>
-                        <?php esc_html_e('Show me more', 'envothemes-demo-import') ?>
-                    </a>
-                </li>
-                <li class="hide-message">
-                    <a href="<?php echo esc_url($dismiss_url) ?>">
-                        <span class="dashicons dashicons-smiley"></span>
-                        <?php esc_html_e('Hide this message', 'envothemes-demo-import') ?>
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
-
-    <?php
-}
-
-/**
- * For PRO Dismiss! 
- */
-function envothemes_pro_dismiss() {
-
-    if (!is_admin() ||
-            !current_user_can('manage_options') ||
-            !isset($_GET['_wpnonce']) ||
-            !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'envo-pro-nonce') ||
-            !isset($_GET['envothemes_pro_dismiss'])) {
-
-        return;
-    }
-    $daysinseconds = 1209600; // 14 Days in seconds (1209600).
-    $newtime = time() + $daysinseconds;
-    update_site_option('envothemes_active_pro_time', $newtime);
-}
-
-/**
- * Envo One notice
- */
-function envo_extra_envo_one_notice() {
-
-    envo_extra_envo_one_dismiss();
-    
-    $theme = wp_get_theme();
-    $activation_time = get_site_option('active_envo_one_time');
-
-    if (!$activation_time) {
-        add_site_option('active_envo_one_time', time());
-    }
-
-    $daysinseconds = 600; // 1 Day in seconds.
-
-    if (time() - $activation_time > $daysinseconds) {
-        if (defined('ENVO_ROYAL_PRO_CURRENT_VERSION') || defined('ENTR_PRO_CURRENT_VERSION') || defined('ENWOO_PRO_CURRENT_VERSION') || defined('ENVO_ECOMMERCE_PRO_CURRENT_VERSION') || defined('ENVO_STOREFRONT_PRO_CURRENT_VERSION') || defined('ENVO_SHOP_PRO_CURRENT_VERSION') || defined('ENVO_ONLINE_STORE_PRO_CURRENT_VERSION') || defined('ENVO_MARKETPLACE_PRO_CURRENT_VERSION') || defined('ENVO_SHOPPER_PRO_CURRENT_VERSION')) {
-            return;
-        }
-        if ( 'Envo One' != $theme->name || 'envo-one' != $theme->template ) {
-            add_action('admin_notices', 'envo_extra_envo_one_notice_message');
-        }
-    }
-}
-
-add_action('admin_init', 'envo_extra_envo_one_notice');
-
-/**
- * For shop notice 
- */
-function envo_extra_envo_one_notice_message() {
-	if (isset($_SERVER['REQUEST_URI'])) {
-		$server = sanitize_text_field( wp_unslash($_SERVER['REQUEST_URI']));
-	}
-    $scheme = (parse_url($server, PHP_URL_QUERY)) ? '&' : '?';
-    $url = $server . $scheme . 'envo_extra_envo_one_dismiss=yes';
-    $dismiss_url = wp_nonce_url($url, 'envo-one-nonce');
-    ?>
-
-    <div class="envo-review-notice envo-shop-notice">
-        <div class="envo-review-thumbnail">
-            <img src="<?php echo esc_url(ENVO_EXTRA_PLUGIN_URL) . 'images/envo-one.png'; ?>" alt="">
-        </div>
-        <div class="envo-review-text">
-            <h3><?php esc_html_e('Try our new FREE WooCommerce WordPress Theme - Envo One', 'envothemes-demo-import') ?></h3>
-            <p>
-                <?php
-                echo sprintf(
-                        esc_html__('%1$s - new free WooCommerce theme. Check out theme %2$s, that can be imported for FREE with simple click.', 'envothemes-demo-import'),
-                        '<a href="https://envothemes.com/envo-one-woocommerce/" target="_blank">Envo One</a>',
-                        '<a href="https://envothemes.com/envo-one-woocommerce/#demos" target="_blank">Demos</a>')
-                ?>
-            </p>
-            <ul class="envo-review-ul">
-                <li class="show-mor-message">
-                    <a href="https://envothemes.com/envo-one-woocommerce/" target="_blank">
-                        <span class="dashicons dashicons-external"></span>
-                        <?php esc_html_e('Show me more', 'envothemes-demo-import') ?>
-                    </a>
-                </li>
-                <li class="hide-message">
-                    <a href="<?php echo $dismiss_url ?>">
-                        <span class="dashicons dashicons-smiley"></span>
-                        <?php esc_html_e('Hide this message', 'envothemes-demo-import') ?>
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
-
-    <?php
-}
-
-/**
- * For shop Dismiss! 
- */
-function envo_extra_envo_one_dismiss() {
-
-    if (!is_admin() ||
-            !current_user_can('manage_options') ||
-            !isset($_GET['_wpnonce']) ||
-            !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'envo-one-nonce') ||
-            !isset($_GET['envo_extra_envo_one_dismiss'])) {
-
-        return;
-    }
-    $daysinseconds = 1209600; // 14 Days in seconds (1209600).
-    $newtime = time() + $daysinseconds;
-    update_site_option('active_envo_one_time', $newtime);
-}
+add_action('admin_init', 'envo_extra_check_pro_versions');
 
 function envo_extra_admin_notice_update_pro(){
-	
+	if (!current_user_can('update_plugins')) {
+		return;
+	}
+
 	$theme = wp_get_theme();
     $themetemplate = $theme->template;
 	if ($themetemplate == 'entr' || $themetemplate == 'envo-one' ) {
@@ -357,108 +44,183 @@ function envo_extra_admin_notice_update_pro(){
 		$updateurl = 'https://envothemes.com/how-to-update-plugin/';
 	}
 
-	$message = sprintf( __( '%1$s requires an %2$supdate%3$s. Please update the plugin to ensure full compatibility with the %4$s theme and WordPress.', 'envothemes-demo-import' ), '<strong>' . ucwords(str_replace('-', ' ',  $themetemplate)) . ' PRO</strong>','<strong>', '</strong>', '<strong>' . ucwords(str_replace('-', ' ',  $themetemplate)) . '</strong>' );
+	/* translators: %1$s: PRO plugin name, %2$s and %3$s: strong tags, %4$s: theme name */
+	$message = sprintf( __( '%1$s requires an %2$supdate%3$s. Please update the plugin to ensure full compatibility with the %4$s theme and WordPress.', 'envo-extra' ), '<strong>' . ucwords(str_replace('-', ' ',  $themetemplate)) . ' PRO</strong>','<strong>', '</strong>', '<strong>' . ucwords(str_replace('-', ' ',  $themetemplate)) . '</strong>' );
 	$button_text = __( 'Update', 'envo-extra' );
 
-	$button = '<p><a href="' . esc_url(admin_url( 'update-core.php?force-check=1')) . '" class="button-secondary">' . esc_html($button_text) . '</a><a href="' . esc_url($changelogurl) . '" target="_blank" class="envo-link-changelog" style="margin-left:10px;margin-top: 4px;display: inline-block;">' . esc_html('Changelog') . '</a><a href="' . esc_url($updateurl) . '" target="_blank" class="envo-link" style="margin-left:10px;margin-top: 4px;display: inline-block;">' . esc_html('How to update?') . '</a></p>';
-	printf( '<div class="error"><p>%1$s</p>%2$s</div>', $message, $button );
-}
-
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
+	$button = '<p><a href="' . esc_url(admin_url( 'update-core.php?force-check=1')) . '" class="button-secondary">' . esc_html($button_text) . '</a><a href="' . esc_url($changelogurl) . '" target="_blank" class="envo-link-changelog" style="margin-left:10px;margin-top: 4px;display: inline-block;">' . esc_html__('Changelog', 'envo-extra') . '</a><a href="' . esc_url($updateurl) . '" target="_blank" class="envo-link" style="margin-left:10px;margin-top: 4px;display: inline-block;">' . esc_html__('How to update?', 'envo-extra') . '</a></p>';
+	printf( '<div class="error"><p>%1$s</p>%2$s</div>', wp_kses_post( $message ), wp_kses_post( $button ) );
 }
 
 /**
- * Display the dismissible admin notice.
+ * Envo Blocks notice: state of the plugin (missing, inactive) or false when it should not be shown.
+ *
+ * @since 1.9.25
  */
-function envo_extra_admin_notice_promo() {
-
-    // Unique notice ID
-    $notice_id = 'envo_sale_admin_notice_promo';
-	
-	// Set expiration time
-//    $expire = strtotime('2026-8-31 23:59:59');
-
-    // Stop running after this date
-//    if ( time() > $expire ) {
-//        return;
-//    }
-	
-//	if(
-//		(defined('ENVO_ROYAL_PRO_CURRENT_VERSION')) ||
-//		(defined('ENTR_PRO_CURRENT_VERSION')) ||
-//		(defined('ENVO_STOREFRONT_PRO_CURRENT_VERSION')) ||
-//		(defined('ENVO_SHOP_PRO_CURRENT_VERSION')) ||
-//		(defined('ENVO_ONLINE_STORE_PRO_CURRENT_VERSION')) ||
-//		(defined('ENVO_SHOPPER_PRO_CURRENT_VERSION')) ||
-//		(defined('ENVO_MARKETPLACE_PRO_CURRENT_VERSION')) ||
-//		(defined('ENWOO_PRO_CURRENT_VERSION')) ||
-//		(defined('ENVO_ECOMMERCE_PRO_CURRENT_VERSION')) ||
-//		(defined('ENVO_MAGAZINE_PRO_CURRENT_VERSION'))
-//	)	{return;}
-
-    // Get the dismissal timestamp
-    $dismissed_timestamp = get_user_meta( get_current_user_id(), $notice_id, true );
-
-    // Only hide if dismissed within the last 2 days (172800 seconds)
-    if ( $dismissed_timestamp && ( time() - intval( $dismissed_timestamp ) < 14 * DAY_IN_SECONDS ) ) {
-        return;
-    }
-
-    // Create dismissal URL with nonce
-    $dismiss_url = wp_nonce_url(
-        add_query_arg(
-            array(
-                'envo-sale-dismiss' => $notice_id,
-            )
-        ),
-        'envo_sale_dismiss_' . $notice_id
-    );
-    ?>
-    <div class="notice notice-info is-dismissible envo-extra-notice" data-dismiss-url="<?php echo esc_url( $dismiss_url ); ?>">
-        <p><span class="dashicons dashicons-admin-site" style="color:red"></span>
-			<?php 
-			echo sprintf(
-					esc_html__('%1$s Including free demo content. %2$s', 'envothemes-demo-import'),
-					'<a href="https://envothemes.com/" target="_blank"><b>Explore our other free WordPress themes.</b></a>',
-					'<a href="https://envothemes.com/" target="_blank">Visit Site</a>')
-			?>
-		</p>
-    </div>
-
-    <script>
-        (function($){
-            $(document).on('click', '.envo-extra-notice .notice-dismiss', function () {
-                var url = $(this).closest('.envo-extra-notice').data('dismiss-url');
-                $.get(url);
-            });
-        })(jQuery);
-    </script>
-    <?php
+function envo_extra_envo_blocks_state() {
+	if ( !function_exists( 'is_plugin_active' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+	}
+	if ( is_plugin_active( 'envo-blocks/envo-blocks.php' ) || is_plugin_active( 'envo-blocks-pro/envo-blocks-pro.php' ) ) {
+		return false;
+	}
+	// Envo Blocks needs WordPress 6.7 and PHP 7.4
+	if ( version_compare( get_bloginfo( 'version' ), '6.7', '<' ) || version_compare( PHP_VERSION, '7.4', '<' ) ) {
+		return false;
+	}
+	$installed = file_exists( WP_PLUGIN_DIR . '/envo-blocks/envo-blocks.php' );
+	if ( !current_user_can( $installed ? 'activate_plugins' : 'install_plugins' ) ) {
+		return false;
+	}
+	if ( get_user_meta( get_current_user_id(), 'envo_extra_envo_blocks_dismissed', true ) ) {
+		return false;
+	}
+	return $installed ? 'inactive' : 'missing';
 }
-add_action( 'admin_notices', 'envo_extra_admin_notice_promo' );
-
 
 /**
- * Handle notice dismissal.
+ * Envo Blocks notice.
+ *
+ * @since 1.9.25
  */
-function envo_extra_handle_dismiss() {
+function envo_extra_envo_blocks_notice() {
+	$screen = get_current_screen();
+	if ( $screen && ( $screen->is_block_editor() || in_array( $screen->id, array( 'update', 'plugin-install', 'appearance_page_envothemes-panel-install-demos' ), true ) ) ) {
+		return;
+	}
+	$state = envo_extra_envo_blocks_state();
+	if ( !$state ) {
+		return;
+	}
+	$screens = ENVO_URL . 'img/envo-blocks-screens.webp';
+	?>
+	<div class="notice envo-eb-notice" data-nonce="<?php echo esc_attr( wp_create_nonce( 'envo_extra_envo_blocks' ) ); ?>">
+		<div class="envo-eb-content">
+			<span class="envo-eb-badge"><?php esc_html_e( 'New · Free plugin', 'envo-extra' ); ?></span>
+			<h2><?php esc_html_e( 'Build a beautiful WooCommerce store with blocks', 'envo-extra' ); ?></h2>
+			<p><?php esc_html_e( 'Envo Blocks adds ready-made store pages, product, shop and cart layouts and WooCommerce blocks to the block editor – no page builder needed.', 'envo-extra' ); ?></p>
+			<ul class="envo-eb-features">
+				<li><span class="dashicons dashicons-layout" aria-hidden="true"></span><?php esc_html_e( '12 store templates, one-click import', 'envo-extra' ); ?></li>
+				<li><span class="dashicons dashicons-cart" aria-hidden="true"></span><?php esc_html_e( '33 product, shop, cart & checkout layouts', 'envo-extra' ); ?></li>
+				<li><span class="dashicons dashicons-block-default" aria-hidden="true"></span><?php esc_html_e( '36 blocks: filters, wishlist, side cart, PDF invoices…', 'envo-extra' ); ?></li>
+			</ul>
+			<div class="envo-eb-actions">
+				<button type="button" class="envo-eb-install" data-state="<?php echo esc_attr( $state ); ?>" data-busy="<?php echo esc_attr( 'missing' === $state ? __( 'Installing…', 'envo-extra' ) : __( 'Activating…', 'envo-extra' ) ); ?>" data-error="<?php esc_attr_e( 'Something went wrong. Install Envo Blocks under Plugins → Add New.', 'envo-extra' ); ?>">
+					<span class="dashicons dashicons-download" aria-hidden="true"></span>
+					<span class="envo-eb-install-label"><?php echo 'missing' === $state ? esc_html__( 'Install Envo Blocks – free', 'envo-extra' ) : esc_html__( 'Activate Envo Blocks', 'envo-extra' ); ?></span>
+				</button>
+				<a class="envo-eb-more" href="https://wordpress.org/plugins/envo-blocks/" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more', 'envo-extra' ); ?></a>
+				<span class="envo-eb-status" aria-live="polite"></span>
+			</div>
+		</div>
+		<div class="envo-eb-visual" aria-hidden="true">
+			<img src="<?php echo esc_url( $screens ); ?>" alt="" width="854" height="500" loading="lazy" />
+		</div>
+		<button type="button" class="envo-eb-dismiss" aria-label="<?php esc_attr_e( 'Dismiss this notice', 'envo-extra' ); ?>"><span class="dashicons dashicons-no-alt" aria-hidden="true"></span></button>
+	</div>
+	<script>
+		( function ( $ ) {
+			var $notice = $( '.envo-eb-notice' ),
+				nonce = $notice.data( 'nonce' );
 
-    if ( ! isset( $_GET['envo-sale-dismiss'] ) ) {
-        return;
-    }
+			$notice.on( 'click', '.envo-eb-dismiss', function () {
+				$notice.fadeOut( 200 );
+				$.post( ajaxurl, { action: 'envo_extra_envo_blocks_dismiss', security: nonce } );
+			} );
 
-    $notice_id = sanitize_key( $_GET['envo-sale-dismiss'] );
+			$notice.on( 'click', '.envo-eb-install', function () {
+				var $button = $( this ),
+					$label = $button.find( '.envo-eb-install-label' ),
+					label = $label.text(),
+					$status = $notice.find( '.envo-eb-status' ).removeClass( 'is-error' ).text( '' ),
+					failed = function ( message ) {
+						$status.addClass( 'is-error' ).text( message || $button.data( 'error' ) );
+						$button.prop( 'disabled', false ).removeClass( 'is-busy' );
+						$label.text( label );
+					};
 
-    // Verify nonce
-    if (
-        ! isset( $_GET['_wpnonce'] ) ||
-        ! wp_verify_nonce( $_GET['_wpnonce'], 'envo_sale_dismiss_' . $notice_id )
-    ) {
-        return;
-    }
+				$button.prop( 'disabled', true ).addClass( 'is-busy' );
+				$label.text( $button.data( 'busy' ) );
 
-    // Save current time as dismissal timestamp
-    update_user_meta( get_current_user_id(), $notice_id, time() );
+				$.post( ajaxurl, { action: 'envo_extra_envo_blocks_install', security: nonce } ).done( function ( response ) {
+					if ( response && response.success ) {
+						window.location.href = response.data.redirect;
+					} else {
+						failed( response && response.data && response.data.message );
+					}
+				} ).fail( function () {
+					failed();
+				} );
+			} );
+		} )( jQuery );
+	</script>
+	<?php
 }
-add_action( 'admin_init', 'envo_extra_handle_dismiss' );
+
+add_action( 'admin_notices', 'envo_extra_envo_blocks_notice' );
+
+/**
+ * Dismiss the Envo Blocks notice for the current user.
+ */
+function envo_extra_envo_blocks_dismiss() {
+	check_ajax_referer( 'envo_extra_envo_blocks', 'security' );
+	update_user_meta( get_current_user_id(), 'envo_extra_envo_blocks_dismissed', time() );
+	wp_send_json_success();
+}
+
+add_action( 'wp_ajax_envo_extra_envo_blocks_dismiss', 'envo_extra_envo_blocks_dismiss' );
+
+/**
+ * Install (from WordPress.org) and activate Envo Blocks.
+ */
+function envo_extra_envo_blocks_install() {
+	check_ajax_referer( 'envo_extra_envo_blocks', 'security' );
+
+	$plugin = 'envo-blocks/envo-blocks.php';
+
+	if ( !file_exists( WP_PLUGIN_DIR . '/' . $plugin ) ) {
+		if ( !current_user_can( 'install_plugins' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Sorry, you are not allowed to install plugins on this site.', 'envo-extra' ) ), 403 );
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+		require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+
+		$api = plugins_api( 'plugin_information', array( 'slug' => 'envo-blocks', 'fields' => array( 'sections' => false ) ) );
+		if ( is_wp_error( $api ) ) {
+			wp_send_json_error( array( 'message' => $api->get_error_message() ) );
+		}
+
+		$skin		 = new WP_Ajax_Upgrader_Skin();
+		$upgrader	 = new Plugin_Upgrader( $skin );
+		$result		 = $upgrader->install( $api->download_link );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+		}
+		if ( is_wp_error( $skin->result ) ) {
+			wp_send_json_error( array( 'message' => $skin->result->get_error_message() ) );
+		}
+		if ( $skin->get_errors()->has_errors() ) {
+			wp_send_json_error( array( 'message' => $skin->get_error_messages() ) );
+		}
+		if ( !$result ) {
+			// Usually FTP credentials are needed
+			wp_send_json_error( array( 'message' => __( 'Envo Blocks could not be installed automatically. Install it under Plugins → Add New.', 'envo-extra' ) ) );
+		}
+	}
+
+	if ( !current_user_can( 'activate_plugins' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Sorry, you are not allowed to activate plugins on this site.', 'envo-extra' ) ), 403 );
+	}
+
+	$activated = activate_plugin( $plugin );
+	if ( is_wp_error( $activated ) ) {
+		wp_send_json_error( array( 'message' => $activated->get_error_message() ) );
+	}
+
+	wp_send_json_success( array( 'redirect' => admin_url( 'admin.php?page=envo-blocks' ) ) );
+}
+
+add_action( 'wp_ajax_envo_extra_envo_blocks_install', 'envo_extra_envo_blocks_install' );

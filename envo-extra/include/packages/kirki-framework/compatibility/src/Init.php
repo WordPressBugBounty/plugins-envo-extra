@@ -203,7 +203,7 @@ class Init {
 	public static function get_variables() {
 
 		// Log error for developers.
-		_doing_it_wrong( __METHOD__, esc_html__( 'We detected you\'re using Kirki\Compatibility\Init::get_variables(). Please use \Kirki\Util\Util::get_variables() instead.', 'kirki' ), '3.0.10' );
+		_doing_it_wrong( __METHOD__, esc_html__( 'We detected you\'re using Kirki\Compatibility\Init::get_variables(). Please use \Kirki\Util\Util::get_variables() instead.', 'envo-extra' ), '3.0.10' );
 
 		// ! This will be failed, because Util class is under Kirki\Util namespace.
 		return Util::get_variables();
@@ -254,11 +254,11 @@ class Init {
 		?>
 		<div class="notice notice-info is-dismissible">
 			<p>
-				<?php esc_html_e( 'Your theme uses a Font Awesome field for icons. To avoid issues with missing icons on your frontend we recommend you install the official Font Awesome plugin.', 'kirki' ); ?>
+				<?php esc_html_e( 'Your theme uses a Font Awesome field for icons. To avoid issues with missing icons on your frontend we recommend you install the official Font Awesome plugin.', 'envo-extra' ); ?>
 			</p>
 			<p>
-				<a class="button button-primary" href="<?php echo esc_url( admin_url( 'plugin-install.php?tab=plugin-information&plugin=font-awesome&TB_iframe=true&width=600&height=550' ) ); ?>"><?php esc_html_e( 'Install Plugin', 'kirki' ); ?></a>
-				<a class="button button-secondary" href="<?php echo esc_url( wp_nonce_url( admin_url( '?dismiss-nag=font-awesome-kirki' ), 'kirki-dismiss-nag', 'nonce' ) ); ?>"><?php esc_html_e( 'Don\'t show this again', 'kirki' ); ?></a>
+				<a class="button button-primary" href="<?php echo esc_url( admin_url( 'plugin-install.php?tab=plugin-information&plugin=font-awesome&TB_iframe=true&width=600&height=550' ) ); ?>"><?php esc_html_e( 'Install Plugin', 'envo-extra' ); ?></a>
+				<a class="button button-secondary" href="<?php echo esc_url( wp_nonce_url( admin_url( '?dismiss-nag=font-awesome-kirki' ), 'kirki-dismiss-nag', 'nonce' ) ); ?>"><?php esc_html_e( 'Don\'t show this again', 'envo-extra' ); ?></a>
 			</p>
 		</div>
 		<?php

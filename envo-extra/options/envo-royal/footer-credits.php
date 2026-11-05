@@ -1,4 +1,7 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
 
 if (!class_exists('Kirki')) {
     return;
@@ -9,6 +12,19 @@ Kirki::add_section('footer_credits', array(
     'panel' => 'envo_theme_panel',
     'priority' => 50,
 ));
+
+// Theme credit link is opt-in. PRO registers its own toggle for the same setting.
+if (!envo_extra_check_for_pro('envo-royal')) {
+    Kirki::add_field('envo_extra', array(
+        'type' => 'toggle',
+        'settings' => 'enwoo_footer_credits_on_off',
+        'label' => esc_attr__('Theme credit link', 'envo-extra'),
+        'description' => esc_attr__('Show a link to the theme author in the footer.', 'envo-extra'),
+        'section' => 'footer_credits',
+        'default' => '0',
+        'priority' => 9,
+    ));
+}
 
 $devices = array(
     'desktop' => array(
@@ -32,7 +48,8 @@ Kirki::add_field('envo_extra', array(
     'type' => 'editor',
     'settings' => 'footer-credits',
     'label' => __('Footer credits', 'envo-extra'),
-    'description' => __('HTML is allowed.<br/> Use <code>%current_year%</code> to update year automatically.<br/> Use <code>%copy%</code> to include copyright symbol.', 'envo-extra'),
+    /* translators: 1: %current_year% tag, 2: %copy% tag */
+    'description' => sprintf( __('HTML is allowed.<br/> Use %1$s to update year automatically.<br/> Use %2$s to include copyright symbol.', 'envo-extra'), '<code>%current_year%</code>', '<code>%copy%</code>' ),
     'section' => 'footer_credits',
     'transport' => 'postMessage',
     'js_vars' => array(

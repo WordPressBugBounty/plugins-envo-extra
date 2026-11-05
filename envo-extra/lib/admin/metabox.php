@@ -1,4 +1,7 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
 
 // Meta-Box
 // How to use: $meta_value = get_post_meta( $post_id, $field_id, true );
@@ -43,6 +46,9 @@ class EnwooOptionsMetabox {
 				jQuery.noConflict();
 				(function($) {
 					$(document).ready(function () {
+						if (!document.getElementById('envo_extra_transparent_header')) {
+							return;
+						}
 						if (document.getElementById('envo_extra_transparent_header').checked) {
 								 $("#envo_extra_header_text_color").closest("tr").show()
 							} else {
@@ -86,7 +92,6 @@ class EnwooOptionsMetabox {
 				'type' => array(),
 				'value' => array(),
 				'checked' => array(),
-				'onclick' => array(),
 			),
 			'label'      => array(
 				'for'  => array(),
@@ -96,7 +101,7 @@ class EnwooOptionsMetabox {
 			'td' => array(),
 		);
 		foreach ( $this->fields as $field ) {
-			$label		 = '<label for="' . esc_attr($field[ 'id' ]) . '">' . esc_html($field[ 'label' ]) . '</label>';
+			$label		 = '<label for="' . esc_attr($field[ 'id' ]) . '">' . esc_html( $this->field_label( $field[ 'id' ] ) ) . '</label>';
 			$meta_value	 = get_post_meta( $post->ID, $field[ 'id' ], true );
 			if ( empty( $meta_value ) ) {
 				if ( isset( $field[ 'default' ] ) ) {
@@ -120,7 +125,17 @@ class EnwooOptionsMetabox {
 	}
 
 	public function format_rows( $label, $input ) {
-		return '<tr><td><strong>' . $label . '</strong></td><td>' . $input . '</td><tr>';
+		return '<tr><td><strong>' . $label . '</strong></td><td>' . $input . '</td></tr>';
+	}
+
+	private function field_label( $id ) {
+		$labels = array(
+			'envo_extra_hide_title'			 => __( 'Hide Title', 'envo-extra' ),
+			'envo_extra_hide_sidebar'		 => __( 'Hide Sidebar', 'envo-extra' ),
+			'envo_extra_transparent_header'	 => __( 'Transparent Header', 'envo-extra' ),
+			'envo_extra_header_text_color'	 => __( 'Transparent Header Text Color', 'envo-extra' ),
+		);
+		return isset( $labels[ $id ] ) ? $labels[ $id ] : $id;
 	}
 
 	public function save_fields( $post_id ) {
@@ -134,14 +149,17 @@ class EnwooOptionsMetabox {
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return $post_id;
 		}
+		if ( wp_is_post_revision( $post_id ) || !current_user_can( 'edit_post', $post_id ) ) {
+			return $post_id;
+		}
 		foreach ( $this->fields as $field ) {
 			switch ( $field['type'] ) {
 				case 'checkbox':
-					update_post_meta( $post_id, $field['id'], isset( $_POST[ $field['id'] ] ) ? sanitize_text_field( wp_unslash( $_POST[ $field['id'] ])) : '' );
+					update_post_meta( $post_id, $field['id'], ( isset( $_POST[ $field['id'] ] ) && 'on' === $_POST[ $field['id'] ] ) ? 'on' : '' );
 					break;
 				default:
 					if ( isset( $_POST[ $field['id'] ] ) ) {
-						$sanitized = sanitize_text_field( wp_unslash($_POST[ $field['id'] ]) );
+						$sanitized = 'color' === $field['type'] ? sanitize_hex_color( wp_unslash( $_POST[ $field['id'] ] ) ) : sanitize_text_field( wp_unslash( $_POST[ $field['id'] ] ) );
 						update_post_meta( $post_id, $field['id'], $sanitized );
 					}
 			}

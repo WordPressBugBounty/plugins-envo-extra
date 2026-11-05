@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
 // phpcs:ignoreFile
 
 if ( ! class_exists( 'Kirki_Active_Callback' ) ) {

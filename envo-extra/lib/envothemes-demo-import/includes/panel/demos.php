@@ -43,9 +43,6 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 			// Demos scripts
 			add_action( 'admin_enqueue_scripts', array( $this, 'scripts' ) );
 
-			// Allows xml uploads
-			add_filter( 'upload_mimes', array( $this, 'allow_xml_uploads' ) );
-
 			// Demos popup
 			add_action( 'admin_footer', array( $this, 'popup' ) );
 		}
@@ -66,6 +63,12 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 
 			// Import XML file
 			add_action( 'wp_ajax_envo_ajax_import_xml', array( $this, 'ajax_import_xml' ) );
+
+			// Delete existing content before the import (optional)
+			add_action( 'wp_ajax_envo_ajax_reset_content', array( $this, 'ajax_reset_content' ) );
+
+			// Remove the content of an imported demo
+			add_action( 'wp_ajax_envo_ajax_remove_demo', array( $this, 'ajax_remove_demo' ) );
 
 			// Import customizer settings
 			add_action( 'wp_ajax_envo_ajax_import_theme_settings', array( $this, 'ajax_import_theme_settings' ) );
@@ -90,18 +93,31 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 			if ( 'appearance_page_envothemes-panel-install-demos' == $hook_suffix ) {
 
 				// CSS
-				wp_enqueue_style( 'envo-demos-style', plugins_url( '/assets/css/demos.css', __FILE__ ) );
+				wp_enqueue_style( 'envo-demos-style', plugins_url( '/assets/css/demos.css', __FILE__ ), array(), ENVO_EXTRA_CURRENT_VERSION );
 
 				// JS
-				wp_enqueue_script( 'envo-demos-js', plugins_url( '/assets/js/demos.js', __FILE__ ), array( 'jquery', 'wp-util', 'updates' ), '1.0', true );
+				wp_enqueue_script( 'envo-demos-js', plugins_url( '/assets/js/demos.js', __FILE__ ), array( 'jquery', 'wp-util', 'updates' ), ENVO_EXTRA_CURRENT_VERSION, true );
 
 				wp_localize_script( 'envo-demos-js', 'envoDemos', array(
 					'ajaxurl'					 => admin_url( 'admin-ajax.php' ),
 					'demo_data_nonce'			 => wp_create_nonce( 'get-demo-data' ),
 					'envo_import_data_nonce'	 => wp_create_nonce( 'envo_import_data_nonce' ),
-					'content_importing_error'	 => esc_html__( 'There was a problem during the importing process resulting in the following error from your server:', 'envothemes-demo-import' ),
-					'button_activating'			 => esc_html__( 'Activating', 'envothemes-demo-import' ) . '&hellip;',
-					'button_active'				 => esc_html__( 'Active', 'envothemes-demo-import' ),
+					'content_importing_error'	 => esc_html__( 'There was a problem during the importing process resulting in the following error from your server:', 'envo-extra' ),
+					'button_activating'			 => esc_html__( 'Activating', 'envo-extra' ) . '&hellip;',
+					'button_active'				 => esc_html__( 'Active', 'envo-extra' ),
+					'button_activate'			 => esc_html__( 'Activate', 'envo-extra' ),
+					'button_install'			 => esc_html__( 'Install', 'envo-extra' ),
+					'install_failed'			 => esc_html__( 'Installation failed', 'envo-extra' ),
+					'reset_confirm'				 => esc_html__( 'All existing posts, pages, products and media files will be permanently deleted. This cannot be undone. Continue?', 'envo-extra' ),
+					'remove_confirm'			 => esc_html__( 'Remove all content imported with this demo and restore your previous settings? Images and pages of the demo will be permanently deleted.', 'envo-extra' ),
+					'removing'					 => esc_html__( 'Removing…', 'envo-extra' ),
+					'removed'					 => esc_html__( 'Removed. Reload the page to see the current state.', 'envo-extra' ),
+					'remove_error'				 => esc_html__( 'Removal failed. Try it again.', 'envo-extra' ),
+					'server_saving'				 => esc_html__( 'Saving…', 'envo-extra' ),
+					'server_saved'				 => esc_html__( 'Saved', 'envo-extra' ),
+					'server_error'				 => esc_html__( 'Could not save the server.', 'envo-extra' ),
+					'import_failed'				 => esc_html__( 'The import stopped. Choose another demo server below the demo list and try again.', 'envo-extra' ),
+					'popup_error'				 => esc_html__( 'The demo could not be loaded. Reload the page and try again.', 'envo-extra' ),
 				) );
 			}
 
@@ -109,15 +125,285 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 		}
 
 		/**
-		 * Allows xml uploads so we can import from server
+		 * Verify capability and nonce of an import request. Stops the request on failure.
 		 *
-		 * @since 1.0.0
+		 * @since 1.9.25
 		 */
-		public function allow_xml_uploads( $mimes ) {
-			$mimes = array_merge( $mimes, array(
-				'xml' => 'application/xml'
-			) );
-			return $mimes;
+		private static function verify_import_request( $capability = 'manage_options' ) {
+			$nonce = isset( $_POST[ 'envo_import_demo_data_nonce' ] ) ? sanitize_text_field( wp_unslash( $_POST[ 'envo_import_demo_data_nonce' ] ) ) : '';
+			if ( !current_user_can( $capability ) || !wp_verify_nonce( $nonce, 'envo_import_demo_data_nonce' ) ) {
+				wp_send_json_error( array( 'message' => __( 'This action was stopped for security purposes.', 'envo-extra' ) ), 403 );
+			}
+		}
+
+		/**
+		 * Return data of the demo selected in the request. Stops the request if the demo does not exist.
+		 *
+		 * @since 1.9.25
+		 */
+		private static function get_requested_demo( $key = 'envo_import_demo', $method = 'post' ) {
+			$request	 = 'get' === $method ? $_GET : $_POST; // phpcs:ignore WordPress.Security.NonceVerification -- verified by the caller.
+			$demo_type	 = isset( $request[ $key ] ) ? sanitize_text_field( wp_unslash( $request[ $key ] ) ) : '';
+			$demos		 = self::get_demos_data();
+			if ( '' === $demo_type || !isset( $demos[ $demo_type ] ) ) {
+				wp_send_json_error( array( 'message' => __( 'Unknown demo.', 'envo-extra' ) ), 400 );
+			}
+			// PRO demo: only with the PRO plugin and its active license - the same check as the popup, here for every
+			// import step (the popup can be bypassed)
+			$premium = isset( $demos[ $demo_type ][ 'required_plugins' ][ 'premium' ] ) ? $demos[ $demo_type ][ 'required_plugins' ][ 'premium' ] : array();
+			if ( $premium ) {
+				$pro = self::pro_action( $premium, array() );
+				if ( $pro ) {
+					wp_send_json_error( array( 'message' => $pro[ 'note' ] ), 403 );
+				}
+			}
+			return array( $demo_type, $demos[ $demo_type ] );
+		}
+
+		/**
+		 * Send the result of an import step.
+		 *
+		 * @since 1.9.25
+		 */
+		private static function send_import_result( $result ) {
+			if ( is_wp_error( $result ) ) {
+				wp_send_json( $result->errors );
+			}
+			wp_die( 'successful import' );
+		}
+
+		/**
+		 * IDs created while the XML import runs.
+		 *
+		 * @since 1.9.25
+		 */
+		private static $tracked = array( 'posts' => array(), 'terms' => array(), 'menus' => array() );
+
+		/**
+		 * Demo being imported (for the filters running during the XML import).
+		 */
+		private static $import_demo = '';
+
+		/**
+		 * A menu of the site with the same slug as a menu of the demo would get the demo items added to it (the importer
+		 * reuses existing terms). Rename it first, so the demo brings its own menu; it is renamed back when the demo is
+		 * removed.
+		 *
+		 * @since 1.9.25
+		 */
+		public static function rename_existing_menus( $terms ) {
+			$history = self::get_history();
+			$own	 = array();
+			if ( isset( $history[ self::$import_demo ][ 'terms' ] ) ) {
+				foreach ( $history[ self::$import_demo ][ 'terms' ] as $term ) {
+					$own[] = (int) $term[ 0 ];
+				}
+			}
+			foreach ( (array) $terms as $term ) {
+				if ( empty( $term[ 'term_taxonomy' ] ) || 'nav_menu' !== $term[ 'term_taxonomy' ] || empty( $term[ 'slug' ] ) ) {
+					continue;
+				}
+				$existing = get_term_by( 'slug', $term[ 'slug' ], 'nav_menu' );
+				// Keep a menu this demo created in an earlier import
+				if ( !$existing || in_array( (int) $existing->term_id, $own, true ) ) {
+					continue;
+				}
+				/* translators: %s: menu name */
+				$name	 = sprintf( __( '%s (before demo)', 'envo-extra' ), $existing->name );
+				$slug	 = wp_unique_term_slug( $existing->slug . '-before-demo', (object) array( 'taxonomy' => 'nav_menu', 'parent' => 0 ) );
+				$updated = wp_update_term( $existing->term_id, 'nav_menu', array( 'name' => $name, 'slug' => $slug ) );
+				if ( !is_wp_error( $updated ) ) {
+					self::$tracked[ 'menus' ][] = array( (int) $existing->term_id, $existing->name, $existing->slug );
+				}
+			}
+			return $terms;
+		}
+
+		public static function track_post( $post_id, $post, $update ) {
+			if ( !$update ) {
+				self::$tracked[ 'posts' ][] = (int) $post_id;
+			}
+		}
+
+		public static function track_attachment( $post_id ) {
+			self::$tracked[ 'posts' ][] = (int) $post_id;
+		}
+
+		public static function track_term( $term_id, $tt_id, $taxonomy ) {
+			self::$tracked[ 'terms' ][] = array( (int) $term_id, $taxonomy );
+		}
+
+		/**
+		 * Imported demos with what they added and the site state before the import.
+		 *
+		 * @since 1.9.25
+		 */
+		public static function get_history() {
+			$history = get_option( 'envo_demo_import_history', array() );
+			return is_array( $history ) ? $history : array();
+		}
+
+		private static function save_history( $history ) {
+			update_option( 'envo_demo_import_history', $history, false );
+		}
+
+		/**
+		 * Replace the URL of the demo site (demo data "demo_url") with the URL of this site in the posts and menu items
+		 * the import added.
+		 *
+		 * @since 1.9.25
+		 */
+		private static function replace_demo_urls( $demo_type, $demo ) {
+			$from = apply_filters( 'envo_extra_demo_urls', empty( $demo[ 'demo_url' ] ) ? array() : array( $demo[ 'demo_url' ] ), $demo_type, $demo );
+			if ( !$from ) {
+				return;
+			}
+			$history = self::get_history();
+			$to		 = untrailingslashit( home_url() );
+			$search	 = array();
+			foreach ( $from as $url ) {
+				$url		 = untrailingslashit( $url );
+				$search[]	 = $url;
+				$search[]	 = str_replace( '/', '\\/', $url ); // JSON in block attributes
+			}
+			$replace = array();
+			foreach ( $search as $url ) {
+				$replace[] = false !== strpos( $url, '\\/' ) ? str_replace( '/', '\\/', $to ) : $to;
+			}
+			foreach ( isset( $history[ $demo_type ][ 'posts' ] ) ? $history[ $demo_type ][ 'posts' ] : array() as $post_id ) {
+				$post = get_post( $post_id );
+				if ( !$post ) {
+					continue;
+				}
+				if ( 'nav_menu_item' === $post->post_type ) {
+					$link = get_post_meta( $post_id, '_menu_item_url', true );
+					if ( $link ) {
+						update_post_meta( $post_id, '_menu_item_url', str_replace( $search, $replace, $link ) );
+					}
+					continue;
+				}
+				$content = str_replace( $search, $replace, $post->post_content );
+				if ( $content !== $post->post_content ) {
+					wp_update_post( wp_slash( array( 'ID' => $post_id, 'post_content' => $content ) ) );
+				}
+			}
+		}
+
+		/**
+		 * Remember the state of the site before the first import of the demo (kept for later imports of the same demo).
+		 *
+		 * @since 1.9.25
+		 */
+		private static function remember_state( $demo_type, $demo ) {
+			$history	 = self::get_history();
+			$stylesheet	 = get_stylesheet();
+			if ( !isset( $history[ $demo_type ] ) ) {
+				$history[ $demo_type ] = array(
+					'name'		 => isset( $demo[ 'demo_name' ] ) ? $demo[ 'demo_name' ] : $demo_type,
+					'time'		 => time(),
+					'theme'		 => $stylesheet,
+					'posts'		 => array(),
+					'terms'		 => array(),
+					'mods'		 => array(),
+					'options'	 => array(
+						'show_on_front'		 => get_option( 'show_on_front' ),
+						'page_on_front'		 => get_option( 'page_on_front' ),
+						'page_for_posts'	 => get_option( 'page_for_posts' ),
+						'posts_per_page'	 => get_option( 'posts_per_page' ),
+						'sidebars_widgets'	 => get_option( 'sidebars_widgets' ),
+						'site_logo'			 => get_option( 'site_logo' ),
+					),
+				);
+			}
+			if ( !array_key_exists( $stylesheet, $history[ $demo_type ][ 'mods' ] ) ) {
+				$history[ $demo_type ][ 'mods' ][ $stylesheet ] = get_option( 'theme_mods_' . $stylesheet, null );
+			}
+			$history[ $demo_type ][ 'time' ] = time();
+			self::save_history( $history );
+		}
+
+		/**
+		 * Remove the content added by an imported demo and restore the previous settings. Runs in batches.
+		 *
+		 * @since 1.9.25
+		 */
+		public function ajax_remove_demo() {
+			check_ajax_referer( 'envo_remove_demo', 'security' );
+			if ( !current_user_can( 'manage_options' ) || !current_user_can( 'delete_others_posts' ) ) {
+				wp_send_json_error( array( 'message' => __( 'This action was stopped for security purposes.', 'envo-extra' ) ), 403 );
+			}
+
+			$demo_type	 = isset( $_POST[ 'demo' ] ) ? sanitize_text_field( wp_unslash( $_POST[ 'demo' ] ) ) : '';
+			$history	 = self::get_history();
+			if ( !isset( $history[ $demo_type ] ) ) {
+				wp_send_json_error( array( 'message' => __( 'Unknown demo.', 'envo-extra' ) ), 400 );
+			}
+			$entry = $history[ $demo_type ];
+
+			// Never delete the Elementor kit, the WooCommerce pages and the privacy page
+			$keep = array( (int) get_option( 'elementor_active_kit' ), (int) get_option( 'wp_page_for_privacy_policy' ) );
+			foreach ( array( 'shop', 'cart', 'checkout', 'myaccount', 'terms' ) as $wc_page ) {
+				$keep[] = (int) get_option( 'woocommerce_' . $wc_page . '_page_id' );
+			}
+
+			// Posts in batches
+			$started = time();
+			while ( $entry[ 'posts' ] && time() - $started < 20 ) {
+				$id = (int) array_pop( $entry[ 'posts' ] );
+				if ( !$id || in_array( $id, $keep, true ) || 'kit' === get_post_meta( $id, '_elementor_template_type', true ) ) {
+					continue;
+				}
+				$type = get_post_type( $id );
+				if ( 'attachment' === $type ) {
+					wp_delete_attachment( $id, true );
+				} elseif ( $type ) {
+					wp_delete_post( $id, true );
+				}
+			}
+			if ( $entry[ 'posts' ] ) {
+				$history[ $demo_type ] = $entry;
+				self::save_history( $history );
+				wp_send_json_success( array( 'done' => false, 'left' => count( $entry[ 'posts' ] ) ) );
+			}
+
+			// Terms (categories, tags, product categories, menus)
+			foreach ( $entry[ 'terms' ] as $term ) {
+				if ( 'nav_menu' === $term[ 1 ] ) {
+					wp_delete_nav_menu( $term[ 0 ] );
+				} elseif ( term_exists( (int) $term[ 0 ], $term[ 1 ] ) && (int) get_option( 'default_' . $term[ 1 ] ) !== (int) $term[ 0 ] ) {
+					wp_delete_term( $term[ 0 ], $term[ 1 ] );
+				}
+			}
+			// Menus of the site renamed before the import get their names back
+			foreach ( isset( $entry[ 'menus' ] ) ? $entry[ 'menus' ] : array() as $menu ) {
+				if ( term_exists( (int) $menu[ 0 ], 'nav_menu' ) ) {
+					wp_update_term( (int) $menu[ 0 ], 'nav_menu', array( 'name' => $menu[ 1 ], 'slug' => $menu[ 2 ] ) );
+				}
+			}
+
+			// Settings before the import
+			foreach ( $entry[ 'mods' ] as $stylesheet => $mods ) {
+				if ( null === $mods || false === $mods ) {
+					delete_option( 'theme_mods_' . $stylesheet );
+				} else {
+					update_option( 'theme_mods_' . $stylesheet, $mods );
+				}
+			}
+			foreach ( $entry[ 'options' ] as $option => $value ) {
+				if ( false === $value ) {
+					delete_option( $option ); // did not exist before the import
+				} else {
+					update_option( $option, $value );
+				}
+			}
+			if ( !empty( $entry[ 'theme' ] ) && get_stylesheet() !== $entry[ 'theme' ] && wp_get_theme( $entry[ 'theme' ] )->exists() ) {
+				switch_theme( $entry[ 'theme' ] );
+			}
+
+			unset( $history[ $demo_type ] );
+			self::save_history( $history );
+
+			wp_send_json_success( array( 'done' => true ) );
 		}
 
 		/**
@@ -331,7 +617,7 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 				);
 			} elseif ( 'Altr' == $theme->name ) {
 				$img_url = ENVO_URL . 'img/demos/altr/';
-				
+
 				$url	 = $source . '/wp-content/uploads/demo-import/altr/';
 				$data	 = array(
 					$theme->template => array(
@@ -1213,7 +1499,7 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 					),
 				);
 			}
-			
+
 			$img_url = ENVO_URL . 'img/demos/envo-royal/';
 			$url		= $source . '/wp-content/uploads/demo-import/envo-royal/envo-royal/';
 			$url_woo	= $source . '/wp-content/uploads/demo-import/envo-royal/envo-royal-woocommerce/';
@@ -1736,6 +2022,10 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 			// combine the two arrays
 			$data		 = array_merge( $data, $data_one );
 			$data		 = array_merge( $data, $data_royal );
+
+			// Block demos (Envo Blocks) for the classic themes - one shared demo site, the theme is picked by ?theme=
+			$data = array_merge( self::get_block_demos( $source ), $data );
+
 			// Return
 			return apply_filters( 'envo_demos_data', $data );
 		}
@@ -1786,23 +2076,101 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 		}
 
 		/**
+		 * Block demos for Enwoo, Envo Royal and Envo One. Content is shared, the customizer settings and widgets are
+		 * exported for every theme (demo-import/blocks/<demo>/<theme>/).
+		 *
+		 * @since 1.9.25
+		 */
+		public static function get_block_demos( $source ) {
+			$template = get_template();
+			if ( !in_array( $template, array( 'enwoo', 'envo-royal', 'envo-one' ), true ) ) {
+				return array();
+			}
+			$url		 = $source . '/wp-content/uploads/demo-import/blocks/tech-fashion/';
+			$demo_url	 = 'https://envothemes.com/block-demos';
+			$common		 = array(
+				'categories'		 => array( 'Gutenberg', 'WooCommerce', 'Free', 'Blocks' ),
+				'xml_file'			 => $url . 'content.xml',
+				'theme_settings'	 => $url . $template . '/customizer.dat',
+				'widgets_file'		 => $url . $template . '/widgets.wie',
+				'demo_url'			 => $demo_url,
+				'blog_title'		 => 'Blog',
+				'posts_to_show'		 => '6',
+				'is_shop'			 => true,
+				'woo_image_size'	 => '600',
+				'woo_thumb_size'	 => '300',
+				'woo_crop_width'	 => '1',
+				'woo_crop_height'	 => '1',
+				'required_plugins'	 => array(
+					'free'			 => array(
+						array(
+							'slug'	 => 'woocommerce',
+							'init'	 => 'woocommerce/woocommerce.php',
+							'name'	 => 'WooCommerce',
+						),
+						array(
+							'slug'	 => 'envo-blocks',
+							'init'	 => 'envo-blocks/envo-blocks.php',
+							'name'	 => 'Envo Blocks',
+						),
+					),
+					'recommended'	 => array(),
+					'premium'		 => array(),
+				),
+			);
+			return array(
+				'blocks-store-1' => array_merge( $common, array(
+					'demo_name'	 => 'Block Shop: Audio',
+					'screenshot' => ENVO_URL . 'img/demos/blocks/store-1.webp',
+					'demo_link'	 => $demo_url . '/?theme=' . $template,
+					'home_title' => 'Home',
+				) ),
+				'blocks-store-2' => array_merge( $common, array(
+					'demo_name'	 => 'Block Shop: Electronics',
+					'screenshot' => ENVO_URL . 'img/demos/blocks/store-2.webp',
+					'demo_link'	 => $demo_url . '/home-2/?theme=' . $template,
+					'home_title' => 'Home 2',
+				) ),
+				'blocks-store-3' => array_merge( $common, array(
+					'demo_name'	 => 'Block Shop: Lifestyle',
+					'screenshot' => ENVO_URL . 'img/demos/blocks/store-3.webp',
+					'demo_link'	 => $demo_url . '/home-3/?theme=' . $template,
+					'home_title' => 'Home 3',
+				) ),
+				'blocks-store-4' => array_merge( $common, array(
+					'demo_name'	 => 'Block Shop: Flash Sale',
+					'screenshot' => ENVO_URL . 'img/demos/blocks/store-4.webp',
+					'demo_link'	 => $demo_url . '/home-4/?theme=' . $template,
+					'home_title' => 'Home 4',
+				) ),
+				'blocks-store-5' => array_merge( $common, array(
+					'demo_name'	 => 'Block Shop: Gadgets',
+					'screenshot' => ENVO_URL . 'img/demos/blocks/store-5.webp',
+					'demo_link'	 => $demo_url . '/home-5/?theme=' . $template,
+					'home_title' => 'Home 5',
+				) ),
+			);
+		}
+
+		/**
 		 * Demos popup
 		 *
 		 * @since 1.4.5
 		 */
 		public static function popup() {
 			global $pagenow;
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- only checks which admin page is shown
 			if ( isset( $_GET[ 'page' ] ) ) {
 				// Display on the demos pages
-				if ( ( 'themes.php' == $pagenow && 'envothemes-panel-install-demos' == $_GET[ 'page' ] ) ) {
+				if ( ( 'themes.php' == $pagenow && 'envothemes-panel-install-demos' == $_GET[ 'page' ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 					?>
 
 					<div id="envo-demo-popup-wrap">
 						<div class="envo-demo-popup-container">
 							<div class="envo-demo-popup-content-wrap">
 								<div class="envo-demo-popup-content-inner">
-									<a href="#" class="envo-demo-popup-close">×</a>
-									<div id="envo-demo-popup-content"></div>
+									<a href="#" class="envo-demo-popup-close" aria-label="<?php esc_attr_e( 'Close', 'envo-extra' ); ?>"><span class="dashicons dashicons-no-alt" aria-hidden="true"></span></a>
+									<div id="envo-demo-popup-content" role="dialog" aria-modal="true"></div>
 								</div>
 							</div>
 						</div>
@@ -1821,23 +2189,18 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 		 */
 		public static function ajax_demo_data() {
 
-			if ( !current_user_can( 'manage_options' ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET[ 'demo_data_nonce' ] ) ), 'get-demo-data' ) ) {
-				die( 'This action was stopped for security purposes.' );
-			}
-
-			// Database reset url
-			if ( is_plugin_active( 'wordpress-database-reset/wp-reset.php' ) ) {
-				$plugin_link = admin_url( 'tools.php?page=database-reset' );
-			} else {
-				$plugin_link = admin_url( 'plugin-install.php?s=WordPress+Database+Reset&tab=search' );
+			$nonce = isset( $_GET[ 'demo_data_nonce' ] ) ? sanitize_text_field( wp_unslash( $_GET[ 'demo_data_nonce' ] ) ) : '';
+			if ( !current_user_can( 'manage_options' ) || !wp_verify_nonce( $nonce, 'get-demo-data' ) ) {
+				wp_die( esc_html__( 'This action was stopped for security purposes.', 'envo-extra' ), 403 );
 			}
 
 			// Get all demos
 			$demos = self::get_demos_data();
 
 			// Get selected demo
-			if ( isset( $_GET[ 'demo_name' ] ) ) {
-				$demo = sanitize_text_field( wp_unslash( $_GET[ 'demo_name' ] ) );
+			$demo = isset( $_GET[ 'demo_name' ] ) ? sanitize_text_field( wp_unslash( $_GET[ 'demo_name' ] ) ) : '';
+			if ( !isset( $demos[ $demo ] ) ) {
+				wp_die( esc_html__( 'Unknown demo.', 'envo-extra' ), 400 );
 			}
 
 			// Get required plugins
@@ -1859,95 +2222,96 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 			$required_theme	 = isset( $demos[ $demo ][ 'required_theme' ] ) ? $demos[ $demo ][ 'required_theme' ] : '';
 			$required_theme_url	 = isset( $demos[ $demo ][ 'required_theme_url' ] ) ? $demos[ $demo ][ 'required_theme_url' ] : '';
 			$theme			 = wp_get_theme();
+			$item			 = $demos[ $demo ];
+			$is_pro			 = !empty( $premium );
+			$other_theme	 = $required_theme && !self::is_active_theme( $required_theme );
+			$pro_action		 = self::pro_action( $premium, $gutenberg );
 			?>
+
+			<div class="envo-di-modal-head">
+				<?php if ( !empty( $item[ 'screenshot' ] ) ) : ?>
+					<img class="envo-di-modal-thumb" src="<?php echo esc_url( $item[ 'screenshot' ] ); ?>" alt="" />
+				<?php endif; ?>
+				<div class="envo-di-modal-heading">
+					<span class="envo-di-kicker"><?php esc_html_e( 'Import demo', 'envo-extra' ); ?></span>
+					<h2 class="title"><?php echo esc_html( $item[ 'demo_name' ] ); ?></h2>
+					<div class="envo-di-badges">
+						<?php if ( $is_pro ) : ?>
+							<span class="envo-di-badge envo-di-badge-pro"><?php esc_html_e( 'PRO', 'envo-extra' ); ?></span>
+						<?php else : ?>
+							<span class="envo-di-badge envo-di-badge-free"><?php esc_html_e( 'Free', 'envo-extra' ); ?></span>
+						<?php endif; ?>
+						<?php if ( !empty( $item[ 'demo_link' ] ) ) : ?>
+							<a class="envo-di-modal-preview" href="<?php echo esc_url( $item[ 'demo_link' ] ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Live preview', 'envo-extra' ); ?><span class="dashicons dashicons-external" aria-hidden="true"></span></a>
+						<?php endif; ?>
+					</div>
+				</div>
+				<ol class="envo-di-stepper">
+					<li class="is-active" data-step="plugins"><span>1</span><?php esc_html_e( 'Plugins', 'envo-extra' ); ?></li>
+					<li data-step="content"><span>2</span><?php esc_html_e( 'Content', 'envo-extra' ); ?></li>
+					<li data-step="import"><span>3</span><?php esc_html_e( 'Import', 'envo-extra' ); ?></li>
+				</ol>
+			</div>
 
 			<div id="envo-demo-plugins">
 
-				<h2 class="title"><?php echo sprintf( esc_html__( 'Import the %1$s demo', 'envothemes-demo-import' ), esc_attr( $demos[ $demo ][ 'demo_name' ] ) ); ?></h2>
-
 				<div class="envo-popup-text">
 
-					<p><?php
-					echo
-					sprintf(
-					esc_html__( 'Importing demo data allow you to quickly edit everything instead of creating content from scratch. It is recommended uploading sample data on a fresh WordPress install to prevent conflicts with your current content. You can use this plugin to reset your site if needed: %1$sWordpress Database Reset%2$s.', 'envothemes-demo-import' ), '<a href="' . esc_url( $plugin_link ) . '" target="_blank">', '</a>'
-					);
-					?>
-					</p>
-
-					<div class="envo-required-plugins-wrap">
-						<h3><?php esc_html_e( 'Required Plugins', 'envothemes-demo-import' ); ?></h3>
-						<p><?php esc_html_e( 'For your site to look exactly like this demo, the plugins below need to be activated.', 'envothemes-demo-import' ); ?></p>
-						<div class="envo-required-plugins oe-plugin-installer">
-						<?php
-						self::required_plugins( $free, 'free' );
-						self::required_plugins( $premium, 'premium' );
-						?>
+					<?php if ( !empty( $free ) || !empty( $premium ) ) : ?>
+						<div class="envo-required-plugins-wrap">
+							<h3><?php esc_html_e( 'Required plugins', 'envo-extra' ); ?></h3>
+							<p><?php esc_html_e( 'The demo needs these plugins to look like the preview.', 'envo-extra' ); ?></p>
+							<div class="envo-required-plugins oe-plugin-installer" data-group="required">
+								<?php
+								self::required_plugins( $free, 'free' );
+								self::required_plugins( $premium, 'premium' );
+								?>
+							</div>
 						</div>
-							<?php if ( isset( $recommended ) && !empty( $recommended ) ) { ?>
-							<h3><?php esc_html_e( 'Recommended Plugins', 'envothemes-demo-import' ); ?></h3>
-							<p><?php esc_html_e( 'These plugins are not required for the demo import. However, if you do not install them, some demo features will not be included.', 'envothemes-demo-import' ); ?></p>
-							<div class="envo-required-plugins oe-plugin-installer">
+					<?php endif; ?>
+
+					<?php if ( !empty( $recommended ) ) : ?>
+						<div class="envo-required-plugins-wrap">
+							<h3><?php esc_html_e( 'Recommended plugins', 'envo-extra' ); ?></h3>
+							<p><?php esc_html_e( 'Optional. Without them, some demo features (for example the shop) will not be included.', 'envo-extra' ); ?></p>
+							<div class="envo-required-plugins oe-plugin-installer" data-group="recommended">
 								<?php self::required_plugins( $recommended, 'recommended' ); ?>
 							</div>
-							<?php } ?>
-							<?php if ( (isset( $required_theme ) && !empty( $required_theme )) && ($theme->name != $required_theme) ) { ?>
-							<h3><?php esc_html_e( 'Required Theme', 'envo-extra' ); ?></h3>
-							<p><?php echo sprintf( esc_html__( 'This demo requires a different active theme. Theme %1$s will be activated after the import.', 'envo-extra' ), '<a href="' . esc_url( $required_theme_url ) . '" target="_blank">' . esc_html( $required_theme ) . '</a>' ); ?></p>
-						<?php } ?>	
-					</div>
+						</div>
+					<?php endif; ?>
+
+					<?php if ( $other_theme ) : ?>
+						<div class="envo-di-callout">
+							<span class="dashicons dashicons-admin-appearance" aria-hidden="true"></span>
+							<p>
+								<?php
+								/* translators: %s: theme name with link */
+								echo wp_kses( sprintf( __( 'This demo is made for the %s theme. The theme will be installed and activated after the import.', 'envo-extra' ), '<a href="' . esc_url( $required_theme_url ) . '" target="_blank" rel="noopener">' . esc_html( $required_theme ) . '</a>' ), array( 'a' => array( 'href' => array(), 'target' => array(), 'rel' => array() ) ) );
+								?>
+							</p>
+						</div>
+					<?php endif; ?>
 
 				</div>
 
-				<?php if ( !defined( 'ENWOO_PRO_CURRENT_VERSION' ) && !empty( $premium ) && $premium[ '0' ][ 'slug' ] == 'enwoo-pro' ) { ?>
-					<div class="envo-button envo-plugins-pro">
-						<a href="<?php echo esc_url( 'https://enwoo-wp.com/enwoo-pro/' ); ?>" target="_blank" >
-							<?php esc_html_e( 'Install and activate Enwoo PRO', 'envo-extra' ); ?>
-						</a>
-					</div>
-				<?php } elseif ( defined( 'ENWOO_PRO_CURRENT_VERSION' ) && !defined( 'ENWOO_PRO_STATUS' ) && !empty( $premium ) && $premium[ '0' ][ 'slug' ] == 'enwoo-pro' ) { ?>
-					<div class="envo-button envo-plugins-pro">
-						<a href="<?php echo esc_url( network_admin_url( 'options-general.php?page=enwoo-license-options' ) ) ?>" >
-							<?php esc_html_e( 'Activate Enwoo PRO license', 'envo-extra' ); ?>
-						</a>
-					</div>
-				<?php } elseif ( defined( 'ENWOO_PRO_CURRENT_VERSION' ) && (defined( 'ENWOO_PRO_STATUS' ) && ENWOO_PRO_STATUS == 'expired') && !empty( $premium ) && $premium[ '0' ][ 'slug' ] == 'enwoo-pro' ) { ?>
-					<div class="envo-button envo-plugins-pro">
-						<a href="<?php echo esc_url( 'https://enwoo-wp.com/my-account/orders/' ) ?>" >
-							<?php esc_html_e( 'Product expired! Renew the Enwoo PRO license', 'envo-extra' ); ?>
-						</a>
-					</div>
-				<?php } elseif ( !defined( 'ENVO_ROYAL_PRO_CURRENT_VERSION' ) && !empty( $premium ) && $premium[ '0' ][ 'slug' ] == 'envo-royal-pro' ) { ?>
-					<div class="envo-button envo-plugins-pro">
-						<a href="<?php echo esc_url( 'https://envothemes.com/product/envo-royal-pro/' ); ?>" target="_blank" >
-							<?php esc_html_e( 'Install and activate Envo Royal PRO', 'envo-extra' ); ?>
-						</a>
-					</div>
-				<?php } elseif ( defined( 'ENVO_ROYAL_PRO_CURRENT_VERSION' ) && !defined( 'ENVO_ROYAL_PRO_STATUS' ) && !empty( $premium ) && $premium[ '0' ][ 'slug' ] == 'envo-royal-pro' ) { ?>
-					<div class="envo-button envo-plugins-pro">
-						<a href="<?php echo esc_url( network_admin_url( 'options-general.php?page=envo-royal-license-options' ) ) ?>" >
-							<?php esc_html_e( 'Activate Envo Royal PRO license', 'envo-extra' ); ?>
-						</a>
-					</div>
-				<?php } elseif ( defined( 'ENVO_ROYAL_PRO_CURRENT_VERSION' ) && (defined( 'ENVO_ROYAL_PRO_STATUS' ) && ENVO_ROYAL_PRO_STATUS == 'expired') && !empty( $premium ) && $premium[ '0' ][ 'slug' ] == 'envo-royal-pro' ) { ?>
-					<div class="envo-button envo-plugins-pro">
-						<a href="<?php echo esc_url( 'https://envothemes.com/my-account/orders/' ) ?>" >
-							<?php esc_html_e( 'Product expired! Renew the Envo Royal PRO license', 'envo-extra' ); ?>
-						</a>
-					</div>
-				<?php } elseif ( !envo_extra_is_gutenberg_active() && strpos( json_encode( $gutenberg ), "Gutenberg" ) !== false ) { ?>
-					<div class="envo-button envo-plugins-pro">
-						<a href="<?php echo esc_url( network_admin_url( 'options-writing.php#classic-editor-options' ) ) ?>" >
-							<?php esc_html_e( 'Gutenberg is disabled on your site! Activate it.', 'envo-extra' ); ?>
-						</a>
-					</div>
-				<?php } else { ?>
-					<div class="envo-button envo-plugins-next">
-						<a href="#">
-							<?php esc_html_e( 'Go to the next step', 'envo-extra' ); ?>
-						</a>
-					</div>
-				<?php } ?>
+				<div class="envo-di-modal-foot">
+					<?php if ( $pro_action ) : ?>
+						<p class="envo-di-foot-note"><?php echo esc_html( $pro_action[ 'note' ] ); ?></p>
+						<?php if ( $pro_action[ 'url' ] ) : ?>
+							<div class="envo-button envo-plugins-pro">
+								<a href="<?php echo esc_url( $pro_action[ 'url' ] ); ?>" <?php echo $pro_action[ 'external' ] ? 'target="_blank" rel="noopener"' : ''; ?>><?php echo esc_html( $pro_action[ 'label' ] ); ?></a>
+							</div>
+						<?php endif; ?>
+					<?php else : ?>
+						<p class="envo-di-foot-note envo-di-missing" hidden>
+							<?php esc_html_e( 'Install and activate the required plugins first.', 'envo-extra' ); ?>
+							<a href="#" class="envo-di-skip"><?php esc_html_e( 'Continue anyway', 'envo-extra' ); ?></a>
+						</p>
+						<div class="envo-button envo-plugins-next">
+							<a href="#"><?php esc_html_e( 'Next: choose content', 'envo-extra' ); ?><span class="dashicons dashicons-arrow-right-alt" aria-hidden="true"></span></a>
+						</div>
+					<?php endif; ?>
+				</div>
 
 			</div>
 
@@ -1955,63 +2319,171 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 
 				<input id="envo_import_demo" type="hidden" name="envo_import_demo" value="<?php echo esc_attr( $demo ); ?>" />
 
-				<div class="envo-demo-import-form-types">
+				<div class="envo-demo-import-form-types envo-popup-text">
 
-					<h2 class="title"><?php esc_html_e( 'Select what you want to import:', 'envothemes-demo-import' ); ?></h2>
+					<h3><?php esc_html_e( 'What do you want to import?', 'envo-extra' ); ?></h3>
+					<p class="envo-di-backup-note"><span class="dashicons dashicons-backup" aria-hidden="true"></span><?php esc_html_e( 'Back up your site (database and files) before the import, so you can always go back.', 'envo-extra' ); ?></p>
 
-					<ul class="envo-popup-text">
+					<ul class="envo-di-options">
 						<li>
 							<label for="envo_import_xml">
 								<input id="envo_import_xml" type="checkbox" name="envo_import_xml" checked="checked" />
-								<strong><?php esc_html_e( 'Import XML Data', 'envothemes-demo-import' ); ?></strong> (<?php esc_html_e( 'pages, posts, images, menus, etc...', 'envothemes-demo-import' ); ?>)
+								<span class="envo-di-option-text">
+									<strong><?php esc_html_e( 'Content', 'envo-extra' ); ?></strong>
+									<small><?php esc_html_e( 'Pages, posts, products, images and menus', 'envo-extra' ); ?></small>
+								</span>
 							</label>
 						</li>
-
 						<li>
 							<label for="envo_theme_settings">
 								<input id="envo_theme_settings" type="checkbox" name="envo_theme_settings" checked="checked" />
-								<strong><?php esc_html_e( 'Import Customizer Settings', 'envothemes-demo-import' ); ?></strong>
+								<span class="envo-di-option-text">
+									<strong><?php esc_html_e( 'Customizer settings', 'envo-extra' ); ?></strong>
+									<small><?php esc_html_e( 'Colors, fonts, header and layout options', 'envo-extra' ); ?></small>
+								</span>
 							</label>
 						</li>
-
 						<li>
 							<label for="envo_import_widgets">
 								<input id="envo_import_widgets" type="checkbox" name="envo_import_widgets" checked="checked"/>
-								<strong><?php esc_html_e( 'Import Widgets', 'envothemes-demo-import' ); ?></strong>
+								<span class="envo-di-option-text">
+									<strong><?php esc_html_e( 'Widgets', 'envo-extra' ); ?></strong>
+									<small><?php esc_html_e( 'Sidebar and footer widgets', 'envo-extra' ); ?></small>
+								</span>
 							</label>
 						</li>
-						<?php if ( $required_theme == 'Envo Royal' && 'Envo Royal' != $theme->name ) { ?>
-							<li>
+						<li class="envo-di-option-danger">
+							<label for="envo_reset_content">
+								<input id="envo_reset_content" type="checkbox" name="envo_reset_content" />
+								<span class="envo-di-option-text">
+									<strong><?php esc_html_e( 'Delete existing content first (optional)', 'envo-extra' ); ?></strong>
+									<small><?php esc_html_e( 'Removes all posts, pages, products, media files, Elementor templates, menus and widgets, so only the demo content stays. Users, plugins, settings, orders and data of other plugins are kept.', 'envo-extra' ); ?></small>
+								</span>
+							</label>
+						</li>
+						<?php if ( $other_theme ) : ?>
+							<li class="is-locked">
 								<label for="envo_activate_enwoo">
 									<input id="envo_activate_enwoo" type="checkbox" name="envo_activate_enwoo" checked="checked" disabled/>
-									<strong>
-										<?php echo sprintf( esc_html__( 'Activate %1$s theme', 'envothemes-demo-import' ), esc_html( $required_theme ) ); ?>
-									</strong>
+									<span class="envo-di-option-text">
+										<?php /* translators: %s: theme name */ ?>
+										<strong><?php echo esc_html( sprintf( __( 'Activate the %s theme', 'envo-extra' ), $required_theme ) ); ?></strong>
+										<small><?php esc_html_e( 'Required for this demo', 'envo-extra' ); ?></small>
+									</span>
 								</label>
 							</li>
-						<?php } ?>
+						<?php endif; ?>
 					</ul>
+
+					<div class="envo-di-warning" hidden>
+						<span class="dashicons dashicons-warning" aria-hidden="true"></span>
+						<p>
+							<strong><?php esc_html_e( 'This cannot be undone.', 'envo-extra' ); ?></strong>
+							<?php esc_html_e( 'All existing posts, pages, products and media files will be permanently deleted before the import. Make a backup of your site first.', 'envo-extra' ); ?>
+						</p>
+					</div>
 
 				</div>
 
-			<?php wp_nonce_field( 'envo_import_demo_data_nonce', 'envo_import_demo_data_nonce' ); ?>
-				<input type="submit" name="submit" class="envo-button envo-import" value="<?php esc_html_e( 'Install this demo', 'envothemes-demo-import' ); ?>"  />
+				<?php wp_nonce_field( 'envo_import_demo_data_nonce', 'envo_import_demo_data_nonce' ); ?>
+				<div class="envo-di-modal-foot">
+					<a href="#" class="envo-di-back"><span class="dashicons dashicons-arrow-left-alt" aria-hidden="true"></span><?php esc_html_e( 'Back', 'envo-extra' ); ?></a>
+					<input type="submit" name="submit" class="envo-button envo-import" value="<?php esc_attr_e( 'Import demo', 'envo-extra' ); ?>" data-label="<?php esc_attr_e( 'Import demo', 'envo-extra' ); ?>" data-label-reset="<?php esc_attr_e( 'Delete content and import', 'envo-extra' ); ?>" />
+				</div>
 
 			</form>
 
-			<div class="envo-loader">
-				<h2 class="title"><?php esc_html_e( 'The import process could take some time, please be patient', 'envothemes-demo-import' ); ?></h2>
-				<div class="envo-import-status envo-popup-text"></div>
+			<div class="envo-loader envo-popup-text">
+				<h3><?php esc_html_e( 'Importing the demo…', 'envo-extra' ); ?></h3>
+				<p class="envo-di-loader-note"><?php esc_html_e( 'This can take a few minutes. Please keep this window open.', 'envo-extra' ); ?></p>
+				<div class="envo-di-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div>
+				<div class="envo-import-status"></div>
 			</div>
 
 			<div class="envo-last">
 				<svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"></circle><path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"></path></svg>
-				<h3><?php esc_html_e( 'Demo Imported!', 'envothemes-demo-import' ); ?></h3>
-				<a href="<?php echo esc_url( get_home_url() ); ?>" target="_blank"><?php esc_html_e( 'See the result', 'envothemes-demo-import' ); ?></a>
+				<h3><?php esc_html_e( 'Demo imported!', 'envo-extra' ); ?></h3>
+				<p><?php esc_html_e( 'Your site now looks like the demo. Replace the texts and images with your own.', 'envo-extra' ); ?></p>
+				<p class="envo-di-last-undo"><?php esc_html_e( 'Changed your mind? You can remove the imported content under "Imported demos" on this page.', 'envo-extra' ); ?></p>
+				<div class="envo-di-last-actions">
+					<a class="button button-primary button-hero" href="<?php echo esc_url( home_url( '/' ) ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'View your site', 'envo-extra' ); ?></a>
+					<a class="button button-hero" href="<?php echo esc_url( admin_url( 'customize.php' ) ); ?>"><?php esc_html_e( 'Customize', 'envo-extra' ); ?></a>
+				</div>
 			</div>
 
 			<?php
 			die();
+		}
+
+		/**
+		 * Is the given theme (name or slug) the active theme or its parent?
+		 *
+		 * @since 1.9.25
+		 */
+		public static function is_active_theme( $theme_name ) {
+			$theme = wp_get_theme();
+			$slug	 = sanitize_key( str_replace( ' ', '-', strtolower( $theme_name ) ) );
+			return $theme->get( 'Name' ) === $theme_name || $theme->get_template() === $slug || $theme->get_stylesheet() === $slug;
+		}
+
+		/**
+		 * Button shown instead of "Next" when a PRO plugin, its license or the block editor is missing.
+		 *
+		 * @since 1.9.25
+		 */
+		private static function pro_action( $premium, $categories ) {
+			$slug = !empty( $premium[ 0 ][ 'slug' ] ) ? $premium[ 0 ][ 'slug' ] : '';
+			if ( 'enwoo-pro' === $slug || 'envo-royal-pro' === $slug ) {
+				$enwoo		 = 'enwoo-pro' === $slug;
+				$name		 = $enwoo ? 'Enwoo PRO' : 'Envo Royal PRO';
+				$constant	 = $enwoo ? 'ENWOO_PRO' : 'ENVO_ROYAL_PRO';
+				if ( !defined( $constant . '_CURRENT_VERSION' ) && !empty( $premium[ 0 ][ 'init' ] ) && file_exists( WP_PLUGIN_DIR . '/' . $premium[ 0 ][ 'init' ] ) ) {
+					return array(
+						/* translators: %s: PRO plugin name */
+						'note'		 => sprintf( __( 'Activate %s above to continue.', 'envo-extra' ), $name ),
+						'label'		 => '',
+						'url'		 => '',
+						'external'	 => false,
+					);
+				}
+				if ( !defined( $constant . '_CURRENT_VERSION' ) ) {
+					return array(
+						/* translators: %s: PRO plugin name */
+						'note'		 => sprintf( __( 'This demo is part of %s.', 'envo-extra' ), $name ),
+						/* translators: %s: PRO plugin name */
+						'label'		 => sprintf( __( 'Get %s', 'envo-extra' ), $name ),
+						'url'		 => $enwoo ? 'https://enwoo-wp.com/enwoo-pro/' : 'https://envothemes.com/product/envo-royal-pro/',
+						'external'	 => true,
+					);
+				}
+				if ( !defined( $constant . '_STATUS' ) ) {
+					return array(
+						/* translators: %s: PRO plugin name */
+						'note'		 => sprintf( __( 'Activate your %s license to import this demo.', 'envo-extra' ), $name ),
+						'label'		 => __( 'Activate license', 'envo-extra' ),
+						'url'		 => network_admin_url( 'options-general.php?page=' . ( $enwoo ? 'enwoo' : 'envo-royal' ) . '-license-options' ),
+						'external'	 => false,
+					);
+				}
+				if ( 'expired' === constant( $constant . '_STATUS' ) ) {
+					return array(
+						/* translators: %s: PRO plugin name */
+						'note'		 => sprintf( __( 'Your %s license has expired.', 'envo-extra' ), $name ),
+						'label'		 => __( 'Renew license', 'envo-extra' ),
+						'url'		 => $enwoo ? 'https://enwoo-wp.com/my-account/orders/' : 'https://envothemes.com/my-account/orders/',
+						'external'	 => true,
+					);
+				}
+			}
+			if ( !envo_extra_is_gutenberg_active() && is_array( $categories ) && in_array( 'Gutenberg', $categories, true ) ) {
+				return array(
+					'note'		 => __( 'This demo is built with blocks, but the block editor is disabled on your site.', 'envo-extra' ),
+					'label'		 => __( 'Enable the block editor', 'envo-extra' ),
+					'url'		 => network_admin_url( 'options-writing.php#classic-editor-options' ),
+					'external'	 => false,
+				);
+			}
+			return false;
 		}
 
 		/**
@@ -2021,7 +2493,11 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 		 */
 		public static function required_plugins( $plugins, $return ) {
 
-			foreach ( $plugins as $key => $plugin ) {
+			if ( empty( $plugins ) || !is_array( $plugins ) ) {
+				return;
+			}
+
+			foreach ( $plugins as $plugin ) {
 
 				$api = array(
 					'slug'	 => isset( $plugin[ 'slug' ] ) ? $plugin[ 'slug' ] : '',
@@ -2030,47 +2506,49 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 					'notice' => isset( $plugin[ 'notice' ] ) ? $plugin[ 'notice' ] : '',
 				);
 
-				if ( !is_wp_error( $api ) ) { // confirm error free
+				$installed = $api[ 'init' ] && file_exists( WP_PLUGIN_DIR . '/' . $api[ 'init' ] );
+
+				if ( $installed && is_plugin_inactive( $api[ 'init' ] ) ) {
 					// Installed but Inactive.
-					if ( file_exists( WP_PLUGIN_DIR . '/' . $plugin[ 'init' ] ) && is_plugin_inactive( $plugin[ 'init' ] ) ) {
+					$state			 = 'inactive';
+					$button_classes	 = 'button activate-now button-primary';
+					$button_text	 = esc_html__( 'Activate', 'envo-extra' );
+				} elseif ( !$installed ) {
+					// Not Installed.
+					$state			 = 'missing';
+					$button_classes	 = 'button install-now';
+					$button_text	 = esc_html__( 'Install', 'envo-extra' );
+				} else {
+					// Active.
+					$state			 = 'active';
+					$button_classes	 = 'button disabled';
+					$button_text	 = esc_html__( 'Active', 'envo-extra' );
+				}
+				?>
 
-						$button_classes	 = 'button activate-now button-primary';
-						$button_text	 = esc_html__( 'Activate', 'envothemes-demo-import' );
-
-						// Not Installed.
-					} elseif ( !file_exists( WP_PLUGIN_DIR . '/' . $plugin[ 'init' ] ) ) {
-
-						$button_classes	 = 'button install-now';
-						$button_text	 = esc_html__( 'Install Now', 'envothemes-demo-import' );
-
-						// Active.
-					} else {
-						$button_classes	 = 'button disabled';
-						$button_text	 = esc_html__( 'Activated', 'envothemes-demo-import' );
-					}
-					?>
-
-					<div class="envo-plugin envo-clr envo-plugin-<?php echo esc_attr( $api[ 'slug' ] ); ?>" data-slug="<?php echo esc_attr( $api[ 'slug' ] ); ?>" data-init="<?php echo esc_attr( $api[ 'init' ] ); ?>">
-						<h2><?php echo esc_html( $api[ 'name' ] ); ?></h2>
-					<?php if ( $api[ 'notice' ] != '' ) { ?>
-							<div class="envo-plugin-notice"><?php esc_html_e( $api[ 'notice' ] ); ?></div>
-						<?php } ?>
-
-						<?php
-						// If premium plugins and not installed
-						if ( 'premium' == $return && !file_exists( WP_PLUGIN_DIR . '/' . $plugin[ 'init' ] ) ) {
-							$url = $api[ 'slug' ] == "enwoo-pro "? 'https://enwoo-wp.com' : 'https://envothemes.com';
-							?>
-							<a class="button" href="<?php echo esc_url( $url ); ?>/product/<?php echo esc_attr( $api[ 'slug' ] ); ?>/" target="_blank"><?php esc_html_e( 'Get This Addon', 'envothemes-demo-import' ); ?></a>
-						<?php } else { ?>
-							<button class="<?php echo esc_attr( $button_classes ); ?>" data-init="<?php echo esc_attr( $api[ 'init' ] ); ?>" data-slug="<?php echo esc_attr( $api[ 'slug' ] ); ?>" data-name="<?php echo esc_attr( $api[ 'name' ] ); ?>"><?php echo esc_html( $button_text ); ?></button>
+				<div class="envo-plugin envo-clr envo-plugin-<?php echo esc_attr( $api[ 'slug' ] ); ?> is-<?php echo esc_attr( $state ); ?>" data-slug="<?php echo esc_attr( $api[ 'slug' ] ); ?>" data-init="<?php echo esc_attr( $api[ 'init' ] ); ?>"<?php echo 'premium' === $return ? ' data-premium="1"' : ''; ?>>
+					<span class="envo-plugin-icon dashicons dashicons-admin-plugins" aria-hidden="true"></span>
+					<div class="envo-plugin-text">
+						<h4><?php echo esc_html( $api[ 'name' ] ); ?><?php if ( 'premium' === $return ) : ?> <span class="envo-di-badge envo-di-badge-pro"><?php esc_html_e( 'PRO', 'envo-extra' ); ?></span><?php endif; ?></h4>
+						<?php if ( $api[ 'notice' ] != '' ) { ?>
+							<div class="envo-plugin-notice"><?php echo esc_html( $api[ 'notice' ] ); ?></div>
 						<?php } ?>
 					</div>
 
-						<?php
-					}
-				}
+					<?php
+					// If premium plugins and not installed
+					if ( 'premium' == $return && !$installed ) {
+						$url = 'enwoo-pro' === $api[ 'slug' ] ? 'https://enwoo-wp.com/enwoo-pro/' : 'https://envothemes.com/product/' . $api[ 'slug' ] . '/';
+						?>
+						<a class="button" href="<?php echo esc_url( $url ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Get this addon', 'envo-extra' ); ?></a>
+					<?php } else { ?>
+						<button type="button" class="<?php echo esc_attr( $button_classes ); ?>" data-init="<?php echo esc_attr( $api[ 'init' ] ); ?>" data-slug="<?php echo esc_attr( $api[ 'slug' ] ); ?>" data-name="<?php echo esc_attr( $api[ 'name' ] ); ?>" <?php disabled( 'active', $state ); ?>><?php echo esc_html( $button_text ); ?></button>
+					<?php } ?>
+				</div>
+
+				<?php
 			}
+		}
 
 			/**
 			 * Required plugins activate
@@ -2081,16 +2559,40 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 
 				check_ajax_referer( 'envo_import_data_nonce', 'security' );
 
-				if ( !current_user_can( 'install_plugins' ) || !isset( $_POST[ 'init' ] ) || !sanitize_text_field( wp_unslash( $_POST[ 'init' ] ) ) ) {
+				if ( !current_user_can( 'activate_plugins' ) || !isset( $_POST[ 'init' ] ) || !sanitize_text_field( wp_unslash( $_POST[ 'init' ] ) ) ) {
 					wp_send_json_error(
 					array(
 						'success'	 => false,
-						'message'	 => __( 'No plugin specified', 'envothemes-demo-import' ),
+						'message'	 => __( 'No plugin specified', 'envo-extra' ),
 					)
 					);
 				}
 
-				$plugin_init = ( isset( $_POST[ 'init' ] ) ) ? sanitize_text_field( wp_unslash( $_POST[ 'init' ] ) ) : '';
+				$plugin_init = sanitize_text_field( wp_unslash( $_POST[ 'init' ] ) );
+
+				// Allow only plugins listed in the demos data
+				$allowed = array();
+				foreach ( self::get_demos_data() as $demo_data ) {
+					if ( empty( $demo_data[ 'required_plugins' ] ) || !is_array( $demo_data[ 'required_plugins' ] ) ) {
+						continue;
+					}
+					foreach ( $demo_data[ 'required_plugins' ] as $group ) {
+						foreach ( (array) $group as $plugin ) {
+							if ( !empty( $plugin[ 'init' ] ) ) {
+								$allowed[] = $plugin[ 'init' ];
+							}
+						}
+					}
+				}
+				if ( !in_array( $plugin_init, $allowed, true ) ) {
+					wp_send_json_error(
+					array(
+						'success'	 => false,
+						'message'	 => __( 'This plugin is not required by any demo.', 'envo-extra' ),
+					)
+					);
+				}
+
 				$activate	 = activate_plugin( $plugin_init, '', false, true );
 
 				if ( is_wp_error( $activate ) ) {
@@ -2105,7 +2607,7 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 				wp_send_json_success(
 				array(
 					'success'	 => true,
-					'message'	 => __( 'Plugin Successfully Activated', 'envothemes-demo-import' ),
+					'message'	 => __( 'Plugin Successfully Activated', 'envo-extra' ),
 				)
 				);
 			}
@@ -2115,62 +2617,146 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 			 *
 			 * @since 1.4.5
 			 */
+			/**
+			 * Delete the existing content (posts, pages, products, media, menus, widgets) before the import.
+			 * Users, plugins, settings and WooCommerce orders are kept. Runs in batches.
+			 *
+			 * @since 1.9.25
+			 */
+			public function ajax_reset_content() {
+				self::verify_import_request();
+				if ( !current_user_can( 'delete_others_posts' ) ) {
+					wp_send_json_error( array( 'message' => __( 'This action was stopped for security purposes.', 'envo-extra' ) ), 403 );
+				}
+				// The demo must be importable (license of a PRO demo) before anything is deleted
+				self::get_requested_demo();
+
+				// Only the content a demo brings - never data of other plugins (orders, tickets, forms...)
+				$post_types = array_values( array_filter( array( 'post', 'page', 'attachment', 'product', 'product_variation', 'nav_menu_item', 'elementor_library', 'wp_block' ), 'post_type_exists' ) );
+
+				// Keep the WooCommerce pages (shop, cart, checkout, account) and the privacy policy page
+				// and the Elementor kit (global colors and fonts - settings, not content)
+				$keep = array( (int) get_option( 'wp_page_for_privacy_policy' ), (int) get_option( 'elementor_active_kit' ) );
+				foreach ( array( 'shop', 'cart', 'checkout', 'myaccount', 'terms' ) as $wc_page ) {
+					$keep[] = (int) get_option( 'woocommerce_' . $wc_page . '_page_id' );
+				}
+				$keep = array_values( array_filter( $keep ) );
+
+				$started = time();
+				do {
+					$ids = get_posts( array(
+						'post__not_in'		 => $keep,
+						'meta_query'		 => array(
+							'relation' => 'OR',
+							array( 'key' => '_elementor_template_type', 'compare' => 'NOT EXISTS' ),
+							array( 'key' => '_elementor_template_type', 'value' => 'kit', 'compare' => '!=' ),
+						),
+						'post_type'			 => $post_types,
+						'post_status'		 => 'any',
+						'posts_per_page'	 => 100,
+						'fields'			 => 'ids',
+						'orderby'			 => 'ID',
+						'no_found_rows'		 => true,
+					) );
+					foreach ( $ids as $id ) {
+						if ( 'attachment' === get_post_type( $id ) ) {
+							wp_delete_attachment( $id, true );
+						} else {
+							wp_delete_post( $id, true );
+						}
+					}
+				} while ( $ids && time() - $started < 20 );
+
+				// Not finished - the browser calls again
+				if ( $ids ) {
+					wp_die( 'envo-reset-continue' );
+				}
+
+				// Menus and widgets
+				foreach ( wp_get_nav_menus() as $menu ) {
+					wp_delete_nav_menu( $menu->term_id );
+				}
+				set_theme_mod( 'nav_menu_locations', array() );
+
+				$sidebars = get_option( 'sidebars_widgets', array() );
+				if ( is_array( $sidebars ) ) {
+					foreach ( $sidebars as $sidebar => $widgets ) {
+						if ( is_array( $widgets ) && 'wp_inactive_widgets' !== $sidebar ) {
+							$sidebars[ $sidebar ] = array();
+						}
+					}
+					update_option( 'sidebars_widgets', $sidebars );
+				}
+
+				update_option( 'show_on_front', 'posts' );
+				update_option( 'page_on_front', 0 );
+				update_option( 'page_for_posts', 0 );
+
+				// The content of the previous imports is gone
+				self::save_history( array() );
+
+				self::send_import_result( true );
+			}
+
 			public function ajax_get_import_data() {
 				if ( !current_user_can( 'manage_options' ) ) {
-					die( 'This action was stopped for security purposes.' );
+					wp_send_json_error( array( 'message' => __( 'This action was stopped for security purposes.', 'envo-extra' ) ), 403 );
 				}
 				check_ajax_referer( 'envo_import_data_nonce', 'security' );
 
-				echo json_encode(
+				wp_send_json(
 					array(
+						array(
+							'input_name' => 'envo_reset_content',
+							'action'	 => 'envo_ajax_reset_content',
+							'method'	 => 'ajax_reset_content',
+							'loader'	 => esc_html__( 'Deleting existing content', 'envo-extra' )
+						),
 						array(
 							'input_name' => 'envo_import_xml',
 							'action'	 => 'envo_ajax_import_xml',
 							'method'	 => 'ajax_import_xml',
-							'loader'	 => esc_html__( 'Importing XML Data', 'envothemes-demo-import' )
+							'loader'	 => esc_html__( 'Importing XML Data', 'envo-extra' )
 						),
 						array(
 							'input_name' => 'envo_theme_settings',
 							'action'	 => 'envo_ajax_import_theme_settings',
 							'method'	 => 'ajax_import_theme_settings',
-							'loader'	 => esc_html__( 'Importing Customizer Settings', 'envothemes-demo-import' )
+							'loader'	 => esc_html__( 'Importing Customizer Settings', 'envo-extra' )
 						),
 						array(
 							'input_name' => 'envo_import_widgets',
 							'action'	 => 'envo_ajax_import_widgets',
 							'method'	 => 'ajax_import_widgets',
-							'loader'	 => esc_html__( 'Importing Widgets', 'envothemes-demo-import' )
+							'loader'	 => esc_html__( 'Importing Widgets', 'envo-extra' )
 						),
 						array(
 							'input_name' => 'envo_activate_enwoo',
 							'action'	 => 'envo_ajax_envo_activate_enwoo',
 							'method'	 => 'ajax_activate_enwoo',
-							'loader'	 => esc_html__( 'Activating Required Theme', 'envothemes-demo-import' )
+							'loader'	 => esc_html__( 'Activating Required Theme', 'envo-extra' )
 						),
 					)
 				);
-
-				die();
 			}
 
 			public function ajax_activate_enwoo() {
-				if ( !current_user_can( 'manage_options' ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ 'envo_import_demo_data_nonce' ] ) ), 'envo_import_demo_data_nonce' ) ) {
-					die( 'This action was stopped for security purposes.' );
-				}
-				$result = '';
-				
-				// Get the selected demo
-				if ( isset( $_POST[ 'envo_import_demo' ] ) ) {
-					$demo_type = sanitize_text_field( wp_unslash( $_POST[ 'envo_import_demo' ] ) );
+				self::verify_import_request( 'install_themes' );
+				if ( !current_user_can( 'switch_themes' ) ) {
+					wp_send_json_error( array( 'message' => __( 'This action was stopped for security purposes.', 'envo-extra' ) ), 403 );
 				}
 
-				// Get demos data
-				$demo = EnvoThemes_Demos::get_demos_data()[ $demo_type ];
+				// Get the selected demo
+				list( $demo_type, $demo ) = self::get_requested_demo();
+				self::remember_state( $demo_type, $demo );
 
 				// Settings file
 				$theme_settings = isset( $demo[ 'theme_settings' ] ) ? $demo[ 'theme_settings' ] : '';
 				$required_theme	 = isset( $demo[ 'required_theme' ] ) ? $demo[ 'required_theme' ] : '';
-				$required_theme = str_replace(' ', '-', strtolower($required_theme));
+				$required_theme = sanitize_key( str_replace( ' ', '-', strtolower( $required_theme ) ) );
+				if ( '' === $required_theme ) {
+					wp_send_json_error( array( 'message' => __( 'This demo does not require another theme.', 'envo-extra' ) ), 400 );
+				}
 
 				require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 				include_once ABSPATH . 'wp-admin/includes/theme.php';
@@ -2187,26 +2773,24 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 					wp_send_json_error( $status );
 				}
 
-				$skin		 = new WP_Ajax_Upgrader_Skin();
-				$upgrader	 = new Theme_Upgrader( $skin );
-				$result		 = $upgrader->install( $api->download_link );
-
+				if ( !wp_get_theme( $required_theme )->exists() ) {
+					$skin		 = new WP_Ajax_Upgrader_Skin();
+					$upgrader	 = new Theme_Upgrader( $skin );
+					$result		 = $upgrader->install( $api->download_link );
+					if ( is_wp_error( $result ) || !$result ) {
+						wp_send_json_error( array( 'errorMessage' => is_wp_error( $result ) ? $result->get_error_message() : __( 'The theme could not be installed.', 'envo-extra' ) ) );
+					}
+				}
 
 				// Include settings importer
-				include ENVO_PATH . 'includes/panel/classes/importers/class-settings-importer.php';
+				include_once ENVO_PATH . 'includes/panel/classes/importers/class-settings-importer.php';
 
 				switch_theme( $required_theme );
+				self::remember_state( $demo_type, $demo );
 
 				// Import settings.
 				$settings_importer	 = new envo_Settings_Importer();
-				$result				 = $settings_importer->process_import_file( $theme_settings );
-
-				if ( is_wp_error( $result ) ) {
-					echo json_encode( $result->errors );
-				} else {
-					echo 'successful import';
-				}
-				die();
+				self::send_import_result( $settings_importer->process_import_file( $theme_settings ) );
 			}
 
 			/**
@@ -2215,43 +2799,46 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 			 * @since 1.4.5
 			 */
 			public function ajax_import_xml() {
-				if ( !current_user_can( 'manage_options' ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ 'envo_import_demo_data_nonce' ] ) ), 'envo_import_demo_data_nonce' ) ) {
-					die( 'This action was stopped for security purposes.' );
-				}
+				self::verify_import_request();
 
 				// Get the selected demo
-				if ( isset( $_POST[ 'envo_import_demo' ] ) ) {
-					$demo_type = sanitize_text_field( wp_unslash( $_POST[ 'envo_import_demo' ] ) );
-				}
-
-				// Get demos data
-				$demo = EnvoThemes_Demos::get_demos_data()[ $demo_type ];
+				list( $demo_type, $demo ) = self::get_requested_demo();
+				self::remember_state( $demo_type, $demo );
 
 				// Content file
 				$xml_file = isset( $demo[ 'xml_file' ] ) ? $demo[ 'xml_file' ] : '';
 
-				// Delete the default post and page
+				// Move the default post and page to trash (only when they were not edited)
 				$sample_page		 = get_page_by_path( 'sample-page', OBJECT, 'page' );
 				$hello_world_post	 = get_page_by_path( 'hello-world', OBJECT, 'post' );
 
-				if ( !is_null( $sample_page ) ) {
-					wp_delete_post( $sample_page->ID, true );
+				foreach ( array( $sample_page, $hello_world_post ) as $default_post ) {
+					if ( $default_post instanceof WP_Post && $default_post->post_date === $default_post->post_modified ) {
+						wp_trash_post( $default_post->ID );
+					}
 				}
 
-				if ( !is_null( $hello_world_post ) ) {
-					wp_delete_post( $hello_world_post->ID, true );
-				}
-
-				// Import Posts, Pages, Images, Menus.
+				// Import Posts, Pages, Images, Menus - and remember what was created
+				add_action( 'wp_insert_post', array( __CLASS__, 'track_post' ), 10, 3 );
+				add_action( 'add_attachment', array( __CLASS__, 'track_attachment' ) ); // attachments do not fire wp_insert_post
+				add_action( 'created_term', array( __CLASS__, 'track_term' ), 10, 3 );
+				self::$import_demo = $demo_type;
+				add_filter( 'wp_import_terms', array( __CLASS__, 'rename_existing_menus' ) );
 				$result = $this->process_xml( $xml_file );
+				remove_filter( 'wp_import_terms', array( __CLASS__, 'rename_existing_menus' ) );
+				remove_action( 'wp_insert_post', array( __CLASS__, 'track_post' ), 10 );
+				remove_action( 'add_attachment', array( __CLASS__, 'track_attachment' ) );
+				remove_action( 'created_term', array( __CLASS__, 'track_term' ), 10 );
 
-				if ( is_wp_error( $result ) ) {
-					echo json_encode( $result->errors );
-				} else {
-					echo 'successful import';
+				$history = self::get_history();
+				if ( isset( $history[ $demo_type ] ) ) {
+					$history[ $demo_type ][ 'posts' ]	 = array_values( array_unique( array_merge( $history[ $demo_type ][ 'posts' ], self::$tracked[ 'posts' ] ) ) );
+					$history[ $demo_type ][ 'terms' ]	 = array_merge( $history[ $demo_type ][ 'terms' ], self::$tracked[ 'terms' ] );
+					$history[ $demo_type ][ 'menus' ]	 = array_merge( isset( $history[ $demo_type ][ 'menus' ] ) ? $history[ $demo_type ][ 'menus' ] : array(), self::$tracked[ 'menus' ] );
+					self::save_history( $history );
 				}
 
-				die();
+				self::send_import_result( $result );
 			}
 
 			/**
@@ -2260,35 +2847,21 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 			 * @since 1.4.5
 			 */
 			public function ajax_import_theme_settings() {
-				if ( !current_user_can( 'manage_options' ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ 'envo_import_demo_data_nonce' ] ) ), 'envo_import_demo_data_nonce' ) ) {
-					die( 'This action was stopped for security purposes.' );
-				}
+				self::verify_import_request();
 
 				// Include settings importer
-				include ENVO_PATH . 'includes/panel/classes/importers/class-settings-importer.php';
+				include_once ENVO_PATH . 'includes/panel/classes/importers/class-settings-importer.php';
 
 				// Get the selected demo
-				if ( isset( $_POST[ 'envo_import_demo' ] ) ) {
-					$demo_type = sanitize_text_field( wp_unslash( $_POST[ 'envo_import_demo' ] ) );
-				}
-
-				// Get demos data
-				$demo = EnvoThemes_Demos::get_demos_data()[ $demo_type ];
+				list( $demo_type, $demo ) = self::get_requested_demo();
+				self::remember_state( $demo_type, $demo );
 
 				// Settings file
 				$theme_settings = isset( $demo[ 'theme_settings' ] ) ? $demo[ 'theme_settings' ] : '';
 
 				// Import settings.
 				$settings_importer	 = new envo_Settings_Importer();
-				$result				 = $settings_importer->process_import_file( $theme_settings );
-
-				if ( is_wp_error( $result ) ) {
-					echo json_encode( $result->errors );
-				} else {
-					echo 'successful import';
-				}
-
-				die();
+				self::send_import_result( $settings_importer->process_import_file( $theme_settings ) );
 			}
 
 			/**
@@ -2297,37 +2870,23 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 			 * @since 1.4.5
 			 */
 			public function ajax_import_widgets() {
-				if ( !current_user_can( 'manage_options' ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ 'envo_import_demo_data_nonce' ] ) ), 'envo_import_demo_data_nonce' ) ) {
-					die( 'This action was stopped for security purposes.' );
-				}
+				self::verify_import_request();
 
 				// Include widget importer
-				include ENVO_PATH . 'includes/panel/classes/importers/class-widget-importer.php';
+				include_once ENVO_PATH . 'includes/panel/classes/importers/class-widget-importer.php';
 
 				// Get the selected demo
-				if ( isset( $_POST[ 'envo_import_demo' ] ) ) {
-					$demo_type = sanitize_text_field( wp_unslash( $_POST[ 'envo_import_demo' ] ) );
-				}
-
-				// Get demos data
-				$demo = EnvoThemes_Demos::get_demos_data()[ $demo_type ];
+				list( $demo_type, $demo ) = self::get_requested_demo();
+				self::remember_state( $demo_type, $demo );
 
 				// Widgets file
 				$widgets_file = isset( $demo[ 'widgets_file' ] ) ? $demo[ 'widgets_file' ] : '';
 
 				// Import settings.
 				$widgets_importer	 = new Envo_Widget_Importer();
-				$result				 = $widgets_importer->process_import_file( $widgets_file );
-
-				if ( is_wp_error( $result ) ) {
-					echo json_encode( $result->errors );
-				} else {
-					echo 'successful import';
-				}
-
-				die();
+				self::send_import_result( $widgets_importer->process_import_file( $widgets_file ) );
 			}
-			
+
 			public function new_get_page_by_title( $page_title, $output = OBJECT, $post_type = 'page' ) {
 				$args  = array(
 					'title'                  => $page_title,
@@ -2356,19 +2915,17 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 			 * @since 1.4.5
 			 */
 			public function ajax_after_import() {
-				if ( !current_user_can( 'manage_options' ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ 'envo_import_demo_data_nonce' ] ) ), 'envo_import_demo_data_nonce' ) ) {
-					die( 'This action was stopped for security purposes.' );
-				}
+				self::verify_import_request();
 
 				// Get the selected demo
-				if ( isset( $_POST[ 'envo_import_demo' ] ) ) {
-					$demo_type = sanitize_text_field( wp_unslash( $_POST[ 'envo_import_demo' ] ) );
-				}
-				// Get demos data
-				$demo = EnvoThemes_Demos::get_demos_data()[ $demo_type ];
+				list( $demo_type, $demo ) = self::get_requested_demo();
+				self::remember_state( $demo_type, $demo );
 
 				// If XML file is imported
-				if ( $_POST[ 'envo_import_is_xml' ] === 'true' ) {
+				if ( isset( $_POST[ 'envo_import_is_xml' ] ) && 'true' === $_POST[ 'envo_import_is_xml' ] ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified in verify_import_request()
+
+					// Links to the demo site in the imported content and menus point to this site
+					self::replace_demo_urls( $demo_type, $demo );
 
 					// Elementor width setting
 					$elementor_width = isset( $demo[ 'elementor_width' ] ) ? $demo[ 'elementor_width' ] : '';
@@ -2422,11 +2979,11 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 						delete_transient( '_wc_activation_redirect' );
 
 						// Get products image size
-						update_option( 'woocommerce_single_image_width', $image_size );
-						update_option( 'woocommerce_thumbnail_image_width', $thumbnail_size );
+						update_option( 'woocommerce_single_image_width', absint( $image_size ) );
+						update_option( 'woocommerce_thumbnail_image_width', absint( $thumbnail_size ) );
 						update_option( 'woocommerce_thumbnail_cropping', 'custom' );
-						update_option( 'woocommerce_thumbnail_cropping_custom_width', $crop_width );
-						update_option( 'woocommerce_thumbnail_cropping_custom_height', $crop_height );
+						update_option( 'woocommerce_thumbnail_cropping_custom_width', absint( $crop_width ) );
+						update_option( 'woocommerce_thumbnail_cropping_custom_height', absint( $crop_height ) );
 					}
 
 					// Set imported menus to registered theme locations
@@ -2481,7 +3038,7 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 
 					// Posts to show on the blog page
 					if ( !empty( $posts_to_show ) ) {
-						update_option( 'posts_per_page', $posts_to_show );
+						update_option( 'posts_per_page', absint( $posts_to_show ) );
 					}
 				}
 
@@ -2501,22 +3058,24 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 
 				// No sample data found
 				if ( $response === false ) {
-					return new WP_Error( 'xml_import_error', sprintf(__( 'Can not retrieve sample data xml file. The server may be down at the moment please try again later or try manual import. How to: %1$s', 'envothemes-demo-import' ), $url ) );
+					/* translators: %1$s: URL of the manual import guide */
+					return new WP_Error( 'xml_import_error', sprintf(__( 'Can not retrieve sample data xml file. The server may be down at the moment please try again later or try manual import. How to: %1$s', 'envo-extra' ), $url ) );
 				}
 
 				// Write sample data content to temp xml file
-				$temp_xml = ENVO_PATH . 'includes/panel/classes/importers/temp.xml';
-				file_put_contents( $temp_xml, $response );
-
-				// Set temp xml to attachment url for use
-				$attachment_url = $temp_xml;
+				require_once ABSPATH . 'wp-admin/includes/file.php';
+				$temp_xml = wp_tempnam( 'envo-demo-content.xml' );
+				file_put_contents( $temp_xml, $response ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 
 				// If file exists lets import it
-				if ( file_exists( $attachment_url ) ) {
-					$this->import_xml( $attachment_url );
+				if ( $temp_xml && file_exists( $temp_xml ) ) {
+					$result = $this->import_xml( $temp_xml );
+					wp_delete_file( $temp_xml );
+					return $result;
 				} else {
 					// Import file can't be imported - we should die here since this is core for most people.
-					return new WP_Error( 'xml_import_error', sprintf(__( 'The xml import file could not be accessed. Please try again or try manual import. How to: %1$s', 'envothemes-demo-import' ), $url ) );
+					/* translators: %1$s: URL of the manual import guide */
+					return new WP_Error( 'xml_import_error', sprintf(__( 'The xml import file could not be accessed. Please try again or try manual import. How to: %1$s', 'envo-extra' ), $url ) );
 				}
 			}
 
@@ -2552,7 +3111,7 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 					if ( file_exists( $class_wp_importer ) ) {
 						require_once $class_wp_importer;
 					} else {
-						$importer_error = __( 'Can not retrieve class-wp-importer.php', 'envothemes-demo-import' );
+						$importer_error = __( 'Can not retrieve class-wp-importer.php', 'envo-extra' );
 					}
 				}
 
@@ -2562,7 +3121,7 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 					if ( file_exists( $class_wp_import ) ) {
 						require_once $class_wp_import;
 					} else {
-						$importer_error = __( 'Can not retrieve wordpress-importer.php', 'envothemes-demo-import' );
+						$importer_error = __( 'Can not retrieve wordpress-importer.php', 'envo-extra' );
 					}
 				}
 
@@ -2573,16 +3132,12 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 
 					// No error, lets import things...
 					if ( !is_file( $file ) ) {
-						$importer_error = __( 'Sample data file appears corrupt or can not be accessed.', 'envothemes-demo-import' );
+						$importer_error = __( 'Sample data file appears corrupt or can not be accessed.', 'envo-extra' );
 						return new WP_Error( 'xml_import_error', $importer_error );
 					} else {
 						$importer					 = new WP_Import();
 						$importer->fetch_attachments = true;
 						$importer->import( $file );
-
-						// Clear sample data content from temp xml file
-						$temp_xml = ENVO_PATH . 'includes/panel/classes/importers/temp.xml';
-						file_put_contents( $temp_xml, '' );
 					}
 				}
 			}
@@ -2591,4 +3146,3 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 
 	}
 	new EnvoThemes_Demos();
-	

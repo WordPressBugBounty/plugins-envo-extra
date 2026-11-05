@@ -64,7 +64,7 @@ class Dimension extends Base {
 			'kirki-control-dimension',
 			'dimensionkirkiL10n',
 			[
-				'invalid-value' => esc_html__( 'Invalid Value', 'kirki' ),
+				'invalid-value' => esc_html__( 'Invalid Value', 'envo-extra' ),
 			]
 		);
 	}
