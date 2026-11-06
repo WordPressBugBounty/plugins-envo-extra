@@ -733,6 +733,13 @@
     font-size: 16px;
 }
 
+/* WordPress (and some plugins) set a taller line-height on icons in buttons, which pushes our 16px icons
+   below the text */
+body.wp-core-ui .envo-demo-wrap .button .dashicons,
+body.wp-core-ui .envo-demo-wrap .envo-di-modal-preview .dashicons {
+    line-height: 1;
+}
+
 .envo-di-stepper {
     display: flex;
     flex-basis: 100%;

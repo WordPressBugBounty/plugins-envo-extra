@@ -291,13 +291,15 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 
 		/**
 		 * Remember the state of the site before the first import of the demo (kept for later imports of the same demo).
+		 * Returns true when this call started the record.
 		 *
 		 * @since 1.9.25
 		 */
 		private static function remember_state( $demo_type, $demo ) {
 			$history	 = self::get_history();
 			$stylesheet	 = get_stylesheet();
-			if ( !isset( $history[ $demo_type ] ) ) {
+			$new		 = !isset( $history[ $demo_type ] );
+			if ( $new ) {
 				$history[ $demo_type ] = array(
 					'name'		 => isset( $demo[ 'demo_name' ] ) ? $demo[ 'demo_name' ] : $demo_type,
 					'time'		 => time(),
@@ -320,6 +322,45 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 			}
 			$history[ $demo_type ][ 'time' ] = time();
 			self::save_history( $history );
+			return $new;
+		}
+
+		/**
+		 * A step that failed before changing anything must not leave a record behind (it would offer to remove content
+		 * that was never imported).
+		 *
+		 * @since 1.9.26
+		 */
+		private static function forget_failed( $demo_type, $new, $result ) {
+			if ( !$new || !is_wp_error( $result ) ) {
+				return;
+			}
+			$history = self::get_history();
+			if ( isset( $history[ $demo_type ] ) && !$history[ $demo_type ][ 'posts' ] && !$history[ $demo_type ][ 'terms' ] && empty( $history[ $demo_type ][ 'menus' ] ) ) {
+				unset( $history[ $demo_type ] );
+				self::save_history( $history );
+			}
+		}
+
+		/**
+		 * Add what the XML import created so far to the record of the demo. Also runs on shutdown, so content imported
+		 * before a timeout or a fatal error can still be removed.
+		 *
+		 * @since 1.9.26
+		 */
+		public static function save_tracked() {
+			$demo_type = self::$import_demo;
+			if ( '' === $demo_type || !( self::$tracked[ 'posts' ] || self::$tracked[ 'terms' ] || self::$tracked[ 'menus' ] ) ) {
+				return;
+			}
+			$history = self::get_history();
+			if ( isset( $history[ $demo_type ] ) ) {
+				$history[ $demo_type ][ 'posts' ]	 = array_values( array_unique( array_merge( $history[ $demo_type ][ 'posts' ], self::$tracked[ 'posts' ] ) ) );
+				$history[ $demo_type ][ 'terms' ]	 = array_merge( $history[ $demo_type ][ 'terms' ], self::$tracked[ 'terms' ] );
+				$history[ $demo_type ][ 'menus' ]	 = array_merge( isset( $history[ $demo_type ][ 'menus' ] ) ? $history[ $demo_type ][ 'menus' ] : array(), self::$tracked[ 'menus' ] );
+				self::save_history( $history );
+			}
+			self::$tracked = array( 'posts' => array(), 'terms' => array(), 'menus' => array() );
 		}
 
 		/**
@@ -2076,23 +2117,25 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 		}
 
 		/**
-		 * Block demos for Enwoo, Envo Royal and Envo One. Content is shared, the customizer settings and widgets are
-		 * exported for every theme (demo-import/blocks/<demo>/<theme>/).
+		 * Block demos for Enwoo, Envo Royal, Envo One and Entr (with its child themes Altr and Spacr). Content is
+		 * shared, the customizer settings and widgets are exported for every theme (demo-import/blocks/<demo>/<theme>/).
+		 * Another child theme gets the settings of its parent.
 		 *
 		 * @since 1.9.25
 		 */
 		public static function get_block_demos( $source ) {
 			$template = get_template();
-			if ( !in_array( $template, array( 'enwoo', 'envo-royal', 'envo-one' ), true ) ) {
+			if ( !in_array( $template, array( 'enwoo', 'envo-royal', 'envo-one', 'entr' ), true ) ) {
 				return array();
 			}
+			$theme = in_array( get_stylesheet(), array( 'altr', 'spacr' ), true ) ? get_stylesheet() : $template;
 			$url		 = $source . '/wp-content/uploads/demo-import/blocks/tech-fashion/';
 			$demo_url	 = 'https://envothemes.com/block-demos';
 			$common		 = array(
 				'categories'		 => array( 'Gutenberg', 'WooCommerce', 'Free', 'Blocks' ),
 				'xml_file'			 => $url . 'content.xml',
-				'theme_settings'	 => $url . $template . '/customizer.dat',
-				'widgets_file'		 => $url . $template . '/widgets.wie',
+				'theme_settings'	 => $url . $theme . '/customizer.dat',
+				'widgets_file'		 => $url . $theme . '/widgets.wie',
 				'demo_url'			 => $demo_url,
 				'blog_title'		 => 'Blog',
 				'posts_to_show'		 => '6',
@@ -2122,31 +2165,31 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 				'blocks-store-1' => array_merge( $common, array(
 					'demo_name'	 => 'Block Shop: Audio',
 					'screenshot' => ENVO_URL . 'img/demos/blocks/store-1.webp',
-					'demo_link'	 => $demo_url . '/?theme=' . $template,
+					'demo_link'	 => $demo_url . '/?theme=' . $theme,
 					'home_title' => 'Home',
 				) ),
 				'blocks-store-2' => array_merge( $common, array(
 					'demo_name'	 => 'Block Shop: Electronics',
 					'screenshot' => ENVO_URL . 'img/demos/blocks/store-2.webp',
-					'demo_link'	 => $demo_url . '/home-2/?theme=' . $template,
+					'demo_link'	 => $demo_url . '/home-2/?theme=' . $theme,
 					'home_title' => 'Home 2',
 				) ),
 				'blocks-store-3' => array_merge( $common, array(
 					'demo_name'	 => 'Block Shop: Lifestyle',
 					'screenshot' => ENVO_URL . 'img/demos/blocks/store-3.webp',
-					'demo_link'	 => $demo_url . '/home-3/?theme=' . $template,
+					'demo_link'	 => $demo_url . '/home-3/?theme=' . $theme,
 					'home_title' => 'Home 3',
 				) ),
 				'blocks-store-4' => array_merge( $common, array(
 					'demo_name'	 => 'Block Shop: Flash Sale',
 					'screenshot' => ENVO_URL . 'img/demos/blocks/store-4.webp',
-					'demo_link'	 => $demo_url . '/home-4/?theme=' . $template,
+					'demo_link'	 => $demo_url . '/home-4/?theme=' . $theme,
 					'home_title' => 'Home 4',
 				) ),
 				'blocks-store-5' => array_merge( $common, array(
 					'demo_name'	 => 'Block Shop: Gadgets',
 					'screenshot' => ENVO_URL . 'img/demos/blocks/store-5.webp',
-					'demo_link'	 => $demo_url . '/home-5/?theme=' . $template,
+					'demo_link'	 => $demo_url . '/home-5/?theme=' . $theme,
 					'home_title' => 'Home 5',
 				) ),
 			);
@@ -2803,39 +2846,36 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 
 				// Get the selected demo
 				list( $demo_type, $demo ) = self::get_requested_demo();
-				self::remember_state( $demo_type, $demo );
+				$new = self::remember_state( $demo_type, $demo );
 
 				// Content file
 				$xml_file = isset( $demo[ 'xml_file' ] ) ? $demo[ 'xml_file' ] : '';
-
-				// Move the default post and page to trash (only when they were not edited)
-				$sample_page		 = get_page_by_path( 'sample-page', OBJECT, 'page' );
-				$hello_world_post	 = get_page_by_path( 'hello-world', OBJECT, 'post' );
-
-				foreach ( array( $sample_page, $hello_world_post ) as $default_post ) {
-					if ( $default_post instanceof WP_Post && $default_post->post_date === $default_post->post_modified ) {
-						wp_trash_post( $default_post->ID );
-					}
-				}
 
 				// Import Posts, Pages, Images, Menus - and remember what was created
 				add_action( 'wp_insert_post', array( __CLASS__, 'track_post' ), 10, 3 );
 				add_action( 'add_attachment', array( __CLASS__, 'track_attachment' ) ); // attachments do not fire wp_insert_post
 				add_action( 'created_term', array( __CLASS__, 'track_term' ), 10, 3 );
 				self::$import_demo = $demo_type;
+				register_shutdown_function( array( __CLASS__, 'save_tracked' ) );
 				add_filter( 'wp_import_terms', array( __CLASS__, 'rename_existing_menus' ) );
 				$result = $this->process_xml( $xml_file );
 				remove_filter( 'wp_import_terms', array( __CLASS__, 'rename_existing_menus' ) );
 				remove_action( 'wp_insert_post', array( __CLASS__, 'track_post' ), 10 );
 				remove_action( 'add_attachment', array( __CLASS__, 'track_attachment' ) );
 				remove_action( 'created_term', array( __CLASS__, 'track_term' ), 10 );
+				self::save_tracked();
+				self::forget_failed( $demo_type, $new, $result );
 
-				$history = self::get_history();
-				if ( isset( $history[ $demo_type ] ) ) {
-					$history[ $demo_type ][ 'posts' ]	 = array_values( array_unique( array_merge( $history[ $demo_type ][ 'posts' ], self::$tracked[ 'posts' ] ) ) );
-					$history[ $demo_type ][ 'terms' ]	 = array_merge( $history[ $demo_type ][ 'terms' ], self::$tracked[ 'terms' ] );
-					$history[ $demo_type ][ 'menus' ]	 = array_merge( isset( $history[ $demo_type ][ 'menus' ] ) ? $history[ $demo_type ][ 'menus' ] : array(), self::$tracked[ 'menus' ] );
-					self::save_history( $history );
+				// Move the default post and page to trash (only when they were not edited)
+				if ( !is_wp_error( $result ) ) {
+					$sample_page		 = get_page_by_path( 'sample-page', OBJECT, 'page' );
+					$hello_world_post	 = get_page_by_path( 'hello-world', OBJECT, 'post' );
+
+					foreach ( array( $sample_page, $hello_world_post ) as $default_post ) {
+						if ( $default_post instanceof WP_Post && $default_post->post_date === $default_post->post_modified ) {
+							wp_trash_post( $default_post->ID );
+						}
+					}
 				}
 
 				self::send_import_result( $result );
@@ -2854,14 +2894,16 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 
 				// Get the selected demo
 				list( $demo_type, $demo ) = self::get_requested_demo();
-				self::remember_state( $demo_type, $demo );
+				$new = self::remember_state( $demo_type, $demo );
 
 				// Settings file
 				$theme_settings = isset( $demo[ 'theme_settings' ] ) ? $demo[ 'theme_settings' ] : '';
 
 				// Import settings.
 				$settings_importer	 = new envo_Settings_Importer();
-				self::send_import_result( $settings_importer->process_import_file( $theme_settings ) );
+				$result				 = $settings_importer->process_import_file( $theme_settings );
+				self::forget_failed( $demo_type, $new, $result );
+				self::send_import_result( $result );
 			}
 
 			/**
@@ -2877,14 +2919,16 @@ if ( !class_exists( 'EnvoThemes_Demos' ) ) {
 
 				// Get the selected demo
 				list( $demo_type, $demo ) = self::get_requested_demo();
-				self::remember_state( $demo_type, $demo );
+				$new = self::remember_state( $demo_type, $demo );
 
 				// Widgets file
 				$widgets_file = isset( $demo[ 'widgets_file' ] ) ? $demo[ 'widgets_file' ] : '';
 
 				// Import settings.
 				$widgets_importer	 = new Envo_Widget_Importer();
-				self::send_import_result( $widgets_importer->process_import_file( $widgets_file ) );
+				$result				 = $widgets_importer->process_import_file( $widgets_file );
+				self::forget_failed( $demo_type, $new, $result );
+				self::send_import_result( $result );
 			}
 
 			public function new_get_page_by_title( $page_title, $output = OBJECT, $post_type = 'page' ) {

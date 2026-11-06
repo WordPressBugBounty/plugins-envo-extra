@@ -3,7 +3,7 @@
  * Plugin Name: Envo Extra
  * Plugin URI: https://envothemes.com/
  * Description: Extra addon for EnvoThemes Themes
- * Version: 1.9.25
+ * Version: 1.9.26
  * Requires at least: 5.3
  * Requires PHP: 7.0
  * Author: EnvoThemes

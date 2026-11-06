@@ -4,7 +4,7 @@ Author URI: https://envothemes.com/
 Plugin URL: https://envothemes.com/
 Requires at Least: 5.3
 Tested Up To: 7.1
-Stable tag: 1.9.25
+Stable tag: 1.9.26
 Requires PHP: 7.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -30,6 +30,13 @@ Add one click demo import for [EnvoThemes](https://envothemes.com/) WooCommerce 
 This plugin will only function with the [Enwoo](https://enwoo-wp.com/) or [Envo Royal](https://envothemes.com/envo-royal-free-wp-theme/) theme and WooCommerce themes created by [EnvoThemes](https://envothemes.com/)
 
 == Changelog ==
+
+= 1.9.26 =
+* New: the five block demos (Envo Blocks) can be imported in Entr, Altr and Spacr too
+* Fixed: a demo import that failed before importing anything (e.g. the demo server could not be reached) was listed among the imported demos with the option to remove it
+* Demo import: content imported before a timeout or a server error can still be removed
+* Demo import: the default "Sample Page" and "Hello world!" are moved to trash only after a successful content import
+* Install Demos: icons in the Preview and Remove buttons are aligned with the text again (WordPress 7)
 
 = 1.9.25 =
 * New: five block demos built with Envo Blocks for Enwoo, Envo Royal and Envo One (one shared demo site, links open the demo in the active theme)
